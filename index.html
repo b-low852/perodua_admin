@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perodua Admin Dashboard</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h1 {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-menu a:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-left-color: #ff1744;
+        }
+
+        .sidebar-menu a.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border-left-color: #ff1744;
+        }
+
+        .sidebar-menu a span {
+            margin-right: 15px;
+            font-size: 20px;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-bar h2 {
+            color: #1e3c72;
+            font-size: 28px;
+        }
+
+        .firebase-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        .firebase-status.connected {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        .card h3 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ff1744;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group textarea,
+        .form-group input[type="file"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #ff1744;
+            box-shadow: 0 0 0 3px rgba(255, 23, 68, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .btn {
+            background: #ff1744;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #d50032;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 23, 68, 0.3);
+        }
+
+        .btn-secondary {
+            background: #667eea;
+            font-size: 13px;
+            padding: 8px 15px;
+        }
+
+        .btn-secondary:hover {
+            background: #5568d3;
+        }
+
+        .btn-remove {
+            background: #f44336;
+            font-size: 13px;
+            padding: 8px 15px;
+        }
+
+        .btn-remove:hover {
+            background: #da190b;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .stat-card h4 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .feature-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .feature-input-group input {
+            flex: 1;
+        }
+
+        .car-models-list {
+            margin-top: 20px;
+        }
+
+        .car-model-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff1744;
+        }
+
+        .car-model-item h4 {
+            color: #ff1744;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .car-model-item p {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .car-model-item img {
+            max-width: 200px;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+
+        .image-preview {
+            margin-top: 10px;
+            max-width: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .image-preview img {
+            width: 100%;
+            display: block;
+        }
+
+        .logo-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .logo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .success-message, .error-message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideDown 0.3s;
+        }
+
+        .success-message {
+            background: #4caf50;
+            color: white;
+        }
+
+        .error-message {
+            background: #f44336;
+            color: white;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .config-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+
+            .sidebar-header h1,
+            .sidebar-header p,
+            .sidebar-menu a span:not(:first-child) {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 70px;
+            }
+
+            .stats-grid,
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>🚗 Perodua</h1>
+            <p>Admin Dashboard</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#" onclick="showSection('dashboard')" class="active"><span>📊</span> Dashboard</a></li>
+            <li><a href="#" onclick="showSection('cars')"><span>🚙</span> Car Models</a></li>
+            <li><a href="#" onclick="showSection('banner')"><span>📢</span> Banner Settings</a></li>
+            <li><a href="#" onclick="showSection('personal')"><span>👤</span> Personal Info</a></li>
+            <li><a href="#" onclick="showSection('statistics')"><span>📈</span> Statistics</a></li>
+            <li><a href="#" onclick="showSection('services')"><span>🛠️</span> Services</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <h2 id="pageTitle">Dashboard</h2>
+            <div class="firebase-status" id="firebaseStatusBar">
+                <span>🔴</span>
+                <span>Disconnected</span>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="successMessage" class="success-message"></div>
+        <div id="errorMessage" class="error-message"></div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="content-section active">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <h4>Total Cars</h4>
+                    <div class="value" id="totalCars">0</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h4>Firebase Status</h4>
+                    <div class="value" id="dashFirebaseStatus">❌</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <h4>Last Updated</h4>
+                    <div class="value" style="font-size: 16px;" id="lastUpdated">-</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Welcome to Perodua Admin Dashboard</h3>
+                <p style="color: #666; line-height: 1.6;">
+                    Use the sidebar menu to navigate between different sections. You can manage your banner, personal information, statistics, services, and car models all from this dashboard.
+                </p>
+                <p style="color: #666; line-height: 1.6; margin-top: 15px;">
+                    <strong>Quick Actions:</strong>
+                </p>
+                <ul style="color: #666; margin-left: 20px; margin-top: 10px;">
+                    <li>Add car models from the "Car Models" section</li>
+                    <li>Update your banner settings</li>
+                    <li>Manage your personal information</li>
+                    <li>Edit statistics and services</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Car Models Section -->
+        <div id="cars" class="content-section">
+            <div class="card">
+                <h3>Add New Car Model</h3>
+                <form id="carModelForm">
+                    <div class="dashboard-grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="carName">Car Model Name</label>
+                                <input type="text" id="carName" placeholder="e.g., Myvi" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="carPrice">Price (RM)</label>
+                                <input type="text" id="carPrice" placeholder="e.g., RM 46,500" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="carImage">Car Image</label>
+                                <input type="file" id="carImage" accept="image/*" onchange="previewImage(this, 'carImagePreview')">
+                                <div id="carImagePreview" class="image-preview" style="display:none;">
+                                    <img src="" alt="Car Preview">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label>Car Features (Add up to 5)</label>
+                                <div id="featuresContainer">
+                                    <div class="feature-input-group">
+                                        <input type="text" class="feature-input" placeholder="e.g., 1.3L & 1.5L Engine">
+                                    </div>
+                                    <div class="feature-input-group">
+                                        <input type="text" class="feature-input" placeholder="e.g., ASA 3.0 Safety">
+                                    </div>
+                                    <div class="feature-input-group">
+                                        <input type="text" class="feature-input" placeholder="e.g., Best Seller Model">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-secondary" onclick="addFeatureInput()">+ Add Feature</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">➕ Add Car Model</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Existing Car Models</h3>
+                <div class="car-models-list">
+                    <div id="carModelsList">
+                        <p style="color: #666; padding: 20px; text-align: center;">Loading car models from Firebase...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banner Settings Section -->
+        <div id="banner" class="content-section">
+            <div class="card">
+                <h3>Hero Banner Settings</h3>
+                <form id="bannerForm">
+                    <div class="form-group">
+                        <label for="bannerTitle">Banner Title</label>
+                        <input type="text" id="bannerTitle" placeholder="e.g., Drive Your Dream Perodua Today" value="Drive Your Dream Perodua Today">
+                    </div>
+                    <div class="form-group">
+                        <label for="bannerSubtitle">Banner Subtitle</label>
+                        <textarea id="bannerSubtitle" placeholder="Enter banner description">Experience excellence with Malaysia's #1 car brand. Premium quality, unbeatable prices, exceptional service.</textarea>
+                    </div>
+                    <button type="submit" class="btn">💾 Save Banner</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Personal Info Section -->
+        <div id="personal" class="content-section">
+            <div class="card">
+                <h3>Personal Information</h3>
+                <form id="personalInfoForm">
+                    <div class="form-group">
+                        <label for="consultantName">Consultant Name</label>
+                        <input type="text" id="consultantName" placeholder="Enter name" value="Herwan">
+                    </div>
+                    <div class="form-group">
+                        <label for="consultantTitle">Title/Position</label>
+                        <input type="text" id="consultantTitle" placeholder="Enter title" value="Authorized Perodua Consultant">
+                    </div>
+                    <div class="form-group">
+                        <label for="profileImage">Profile Image</label>
+                        <input type="file" id="profileImage" accept="image/*" onchange="previewImage(this, 'profilePreview')">
+                        <div id="profilePreview" class="logo-preview" style="display:none;">
+                            <img src="" alt="Profile Preview">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">💾 Save Personal Info</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div id="statistics" class="content-section">
+            <div class="card">
+                <h3>Statistics</h3>
+                <form id="statsForm">
+                    <div class="stats-grid">
+                        <div class="form-group">
+                            <label for="happyCustomers">Happy Customers</label>
+                            <input type="text" id="happyCustomers" placeholder="500+" value="500+">
+                        </div>
+                        <div class="form-group">
+                            <label for="yearsExperience">Years Experience</label>
+                            <input type="text" id="yearsExperience" placeholder="5+" value="5+">
+                        </div>
+                        <div class="form-group">
+                            <label for="satisfaction">Satisfaction Rate</label>
+                            <input type="text" id="satisfaction" placeholder="100%" value="100%">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">💾 Save Statistics</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Services Section -->
+        <div id="services" class="content-section">
+            <div class="card">
+                <h3>Services & Features</h3>
+                <form id="servicesForm">
+                    <div class="services-grid">
+                        <div class="form-group">
+                            <label for="service1">Service 1</label>
+                            <input type="text" id="service1" placeholder="Enter service" value="Best Price Guarantee">
+                        </div>
+                        <div class="form-group">
+                            <label for="service2">Service 2</label>
+                            <input type="text" id="service2" placeholder="Enter service" value="Trade-In Welcome">
+                        </div>
+                        <div class="form-group">
+                            <label for="service3">Service 3</label>
+                            <input type="text" id="service3" placeholder="Enter service" value="Easy Loan Approval">
+                        </div>
+                        <div class="form-group">
+                            <label for="service4">Service 4</label>
+                            <input type="text" id="service4" placeholder="Enter service" value="Free Test Drive">
+                        </div>
+                        <div class="form-group">
+                            <label for="service5">Service 5</label>
+                            <input type="text" id="service5" placeholder="Enter service" value="24/7 Support">
+                        </div>
+                        <div class="form-group">
+                            <label for="service6">Service 6</label>
+                            <input type="text" id="service6" placeholder="Enter service" value="Special Promotions">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">💾 Save Services</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Firebase variables
+        let db = null;
+        let firebaseInitialized = false;
+
+        // Default Firebase configuration
+        const defaultFirebaseConfig = {
+            apiKey: "AIzaSyAaeDEqg9Bqiew3LaMX5LWG8AWnoVbaO_c",
+            authDomain: "perodua-2bab4.firebaseapp.com",
+            projectId: "perodua-2bab4",
+            storageBucket: "perodua-2bab4.firebasestorage.app",
+            messagingSenderId: "491719396095",
+            appId: "1:491719396095:web:fd8549baf741d896f85aca"
+        };
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Remove active class from all menu items
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+
+            // Add active class to clicked menu item
+            event.target.classList.add('active');
+
+            // Update page title
+            const titles = {
+                'dashboard': 'Dashboard',
+                'cars': 'Car Models',
+                'banner': 'Banner Settings',
+                'personal': 'Personal Information',
+                'statistics': 'Statistics',
+                'services': 'Services & Features'
+            };
+            document.getElementById('pageTitle').textContent = titles[sectionId];
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Initialize Firebase
+        function initializeFirebase(config) {
+            try {
+                firebase.initializeApp(config);
+                db = firebase.firestore();
+                firebaseInitialized = true;
+                
+                updateFirebaseStatus(true);
+                showSuccessMessage('Firebase connected successfully!');
+                
+                // Load all data from Firestore
+                loadCarModelsFromFirestore();
+                loadAdminDataFromFirestore();
+                updateDashboard();
+                
+                return true;
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                showErrorMessage('Failed to connect to Firebase: ' + error.message);
+                updateFirebaseStatus(false);
+                return false;
+            }
+        }
+
+        // Update Firebase status indicators
+        function updateFirebaseStatus(connected) {
+            const statusBar = document.getElementById('firebaseStatusBar');
+            const dashStatus = document.getElementById('dashFirebaseStatus');
+            
+            if (connected) {
+                statusBar.innerHTML = '<span>🟢</span><span>Connected</span>';
+                statusBar.classList.add('connected');
+                dashStatus.textContent = '✅';
+            } else {
+                statusBar.innerHTML = '<span>🔴</span><span>Disconnected</span>';
+                statusBar.classList.remove('connected');
+                dashStatus.textContent = '❌';
+            }
+        }
+
+        // Update dashboard stats
+        async function updateDashboard() {
+            if (firebaseInitialized) {
+                try {
+                    const snapshot = await db.collection('cars').get();
+                    document.getElementById('totalCars').textContent = snapshot.size;
+                } catch (error) {
+                    console.error('Error updating dashboard:', error);
+                }
+            }
+            
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent = now.toLocaleTimeString();
+        }
+
+        // Load Firebase config from localStorage or use default
+        function loadFirebaseConfig() {
+            let config = null;
+            const savedConfig = localStorage.getItem('firebaseConfig');
+            
+            if (savedConfig) {
+                try {
+                    config = JSON.parse(savedConfig);
+                } catch (error) {
+                    console.error('Error parsing saved config:', error);
+                    config = defaultFirebaseConfig;
+                }
+            } else {
+                config = defaultFirebaseConfig;
+                localStorage.setItem('firebaseConfig', JSON.stringify(config));
+            }
+            
+            // Populate form fields if they exist (they're hidden now)
+            const apiKeyEl = document.getElementById('apiKey');
+            if (apiKeyEl) {
+                apiKeyEl.value = config.apiKey || '';
+                document.getElementById('authDomain').value = config.authDomain || '';
+                document.getElementById('projectId').value = config.projectId || '';
+                document.getElementById('storageBucket').value = config.storageBucket || '';
+                document.getElementById('messagingSenderId').value = config.messagingSenderId || '';
+                document.getElementById('appId').value = config.appId || '';
+            }
+            
+            // Auto-initialize if config exists
+            if (config.apiKey && config.projectId) {
+                initializeFirebase(config);
+            }
+        }
+
+        // Show success message
+        function showSuccessMessage(message = 'Changes saved successfully!') {
+            const div = document.getElementById('successMessage');
+            div.textContent = message;
+            div.style.display = 'block';
+            setTimeout(() => {
+                div.style.display = 'none';
+            }, 3000);
+        }
+
+        // Show error message
+        function showErrorMessage(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Preview image function with file size validation
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            const img = preview.querySelector('img');
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // Check file size (5MB limit)
+                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                if (file.size > maxSize) {
+                    showErrorMessage('Image size must be less than 5MB. Please choose a smaller image.');
+                    input.value = ''; // Clear the file input
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                // Check if it's an image
+                if (!file.type.startsWith('image/')) {
+                    showErrorMessage('Please select a valid image file.');
+                    input.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Add feature input
+        function addFeatureInput() {
+            const container = document.getElementById('featuresContainer');
+            const featureCount = container.querySelectorAll('.feature-input-group').length;
+            
+            if (featureCount < 5) {
+                const div = document.createElement('div');
+                div.className = 'feature-input-group';
+                div.innerHTML = '<input type="text" class="feature-input" placeholder="Enter feature">';
+                container.appendChild(div);
+            } else {
+                alert('Maximum 5 features allowed');
+            }
+        }
+
+        // Banner form submission
+        document.getElementById('bannerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const data = {
+                title: document.getElementById('bannerTitle').value,
+                subtitle: document.getElementById('bannerSubtitle').value,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            try {
+                if (firebaseInitialized) {
+                    await db.collection('admin').doc('banner').set(data, { merge: true });
+                }
+                
+                localStorage.setItem('bannerData', JSON.stringify(data));
+                
+                console.log('Banner Data saved:', data);
+                showSuccessMessage('Banner settings saved successfully!');
+                updateDashboard();
+            } catch (error) {
+                console.error('Error saving banner:', error);
+                showErrorMessage('Failed to save banner: ' + error.message);
+                
+                localStorage.setItem('bannerData', JSON.stringify(data));
+                showSuccessMessage('Banner saved to local storage only');
+            }
+        });
+
+        // Personal info form submission
+        document.getElementById('personalInfoForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const consultantName = document.getElementById('consultantName').value;
+            const consultantTitle = document.getElementById('consultantTitle').value;
+            const profileImageSrc = document.querySelector('#profilePreview img').src || '';
+            
+            try {
+                const data = {
+                    name: consultantName,
+                    title: consultantTitle,
+                    image: profileImageSrc, // Store base64 directly
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (firebaseInitialized) {
+                    await db.collection('admin').doc('personalInfo').set(data, { merge: true });
+                }
+                
+                localStorage.setItem('personalInfo', JSON.stringify(data));
+                
+                console.log('Personal Info saved:', data);
+                showSuccessMessage('Personal information saved successfully!');
+                updateDashboard();
+            } catch (error) {
+                console.error('Error saving personal info:', error);
+                showErrorMessage('Failed to save personal info: ' + error.message);
+                
+                const data = {
+                    name: consultantName,
+                    title: consultantTitle,
+                    image: profileImageSrc
+                };
+                localStorage.setItem('personalInfo', JSON.stringify(data));
+                showSuccessMessage('Personal info saved to local storage only');
+            }
+        });
+
+        // Statistics form submission
+        document.getElementById('statsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const data = {
+                customers: document.getElementById('happyCustomers').value,
+                experience: document.getElementById('yearsExperience').value,
+                satisfaction: document.getElementById('satisfaction').value,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                if (firebaseInitialized) {
+                    await db.collection('admin').doc('statistics').set(data, { merge: true });
+                }
+                
+                localStorage.setItem('statistics', JSON.stringify(data));
+                
+                console.log('Statistics saved:', data);
+                showSuccessMessage('Statistics saved successfully!');
+                updateDashboard();
+            } catch (error) {
+                console.error('Error saving statistics:', error);
+                showErrorMessage('Failed to save statistics: ' + error.message);
+                
+                localStorage.setItem('statistics', JSON.stringify(data));
+                showSuccessMessage('Statistics saved to local storage only');
+            }
+        });
+
+        // Services form submission
+        document.getElementById('servicesForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const services = [];
+            for (let i = 1; i <= 6; i++) {
+                const service = document.getElementById('service' + i).value;
+                if (service) services.push(service);
+            }
+            
+            const data = {
+                services: services,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            try {
+                if (firebaseInitialized) {
+                    await db.collection('admin').doc('services').set(data, { merge: true });
+                }
+                
+                localStorage.setItem('services', JSON.stringify(services));
+                
+                console.log('Services saved:', services);
+                showSuccessMessage('Services saved successfully!');
+                updateDashboard();
+            } catch (error) {
+                console.error('Error saving services:', error);
+                showErrorMessage('Failed to save services: ' + error.message);
+                
+                localStorage.setItem('services', JSON.stringify(services));
+                showSuccessMessage('Services saved to local storage only');
+            }
+        });
+
+        // Car model form submission
+        document.getElementById('carModelForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!firebaseInitialized) {
+                showErrorMessage('Please connect to Firebase first!');
+                return;
+            }
+            
+            const carName = document.getElementById('carName').value;
+            const carPrice = document.getElementById('carPrice').value;
+            const carImageSrc = document.querySelector('#carImagePreview img').src || '';
+            
+            const features = [];
+            document.querySelectorAll('.feature-input').forEach(input => {
+                if (input.value.trim()) {
+                    features.push(input.value.trim());
+                }
+            });
+
+            try {
+                const carModel = {
+                    name: carName,
+                    price: carPrice,
+                    features: features,
+                    image: carImageSrc, // Store base64 directly
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                await db.collection('cars').add(carModel);
+                
+                // Reset form
+                this.reset();
+                document.getElementById('carImagePreview').style.display = 'none';
+                
+                // Reset features to 3 inputs
+                const container = document.getElementById('featuresContainer');
+                container.innerHTML = `
+                    <div class="feature-input-group">
+                        <input type="text" class="feature-input" placeholder="e.g., 1.3L & 1.5L Engine">
+                    </div>
+                    <div class="feature-input-group">
+                        <input type="text" class="feature-input" placeholder="e.g., ASA 3.0 Safety">
+                    </div>
+                    <div class="feature-input-group">
+                        <input type="text" class="feature-input" placeholder="e.g., Best Seller Model">
+                    </div>
+                `;
+
+                showSuccessMessage('Car model added successfully!');
+                updateDashboard();
+                console.log('Car Model Added to Firestore:', carModel);
+            } catch (error) {
+                console.error('Error adding car model:', error);
+                showErrorMessage('Failed to add car model: ' + error.message);
+            }
+        });
+
+        // Add car model to list
+        function addCarModelToList(carModel, docId = null) {
+            const list = document.getElementById('carModelsList');
+            const div = document.createElement('div');
+            div.className = 'car-model-item';
+            if (docId) {
+                div.setAttribute('data-doc-id', docId);
+            }
+            div.innerHTML = `
+                <h4>${carModel.name}</h4>
+                <p><strong>Price:</strong> ${carModel.price}</p>
+                <p><strong>Features:</strong> ${carModel.features ? carModel.features.join(', ') : 'No features'}</p>
+                ${carModel.image ? `<img src="${carModel.image}" alt="${carModel.name}">` : ''}
+                <button class="btn btn-remove" style="margin-top: 10px;" onclick="removeCarModel(this)">🗑️ Remove</button>
+            `;
+            list.appendChild(div);
+        }
+
+        // Real-time listener for car models
+        let carModelsUnsubscribe = null;
+
+        // Load car models from Firestore with real-time updates
+        function loadCarModelsFromFirestore() {
+            if (!firebaseInitialized) {
+                const carModels = JSON.parse(localStorage.getItem('carModels') || '[]');
+                const list = document.getElementById('carModelsList');
+                list.innerHTML = '';
+                if (carModels.length === 0) {
+                    list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">No car models found. Add your first car model above!</p>';
+                } else {
+                    carModels.forEach(car => {
+                        addCarModelToList(car);
+                    });
+                }
+                return;
+            }
+
+            try {
+                const list = document.getElementById('carModelsList');
+                
+                if (carModelsUnsubscribe) {
+                    carModelsUnsubscribe();
+                }
+                
+                carModelsUnsubscribe = db.collection('cars')
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot((snapshot) => {
+                        list.innerHTML = '';
+                        
+                        if (snapshot.empty) {
+                            list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">No car models found. Add your first car model above!</p>';
+                            return;
+                        }
+
+                        snapshot.forEach(doc => {
+                            const carModel = doc.data();
+                            addCarModelToList(carModel, doc.id);
+                        });
+                        
+                        updateDashboard();
+                    }, (error) => {
+                        console.error('Error loading car models:', error);
+                        showErrorMessage('Failed to load car models: ' + error.message);
+                        
+                        const carModels = JSON.parse(localStorage.getItem('carModels') || '[]');
+                        list.innerHTML = '';
+                        if (carModels.length === 0) {
+                            list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">No car models found. Add your first car model above!</p>';
+                        } else {
+                            carModels.forEach(car => {
+                                addCarModelToList(car);
+                            });
+                        }
+                    });
+            } catch (error) {
+                console.error('Error setting up car models listener:', error);
+                showErrorMessage('Failed to load car models: ' + error.message);
+            }
+        }
+
+        // Remove car model
+        async function removeCarModel(button) {
+            if (!confirm('Are you sure you want to remove this car model?')) {
+                return;
+            }
+
+            const item = button.parentElement;
+            const docId = item.getAttribute('data-doc-id');
+            
+            if (firebaseInitialized && docId) {
+                try {
+                    await db.collection('cars').doc(docId).delete();
+                    item.remove();
+                    showSuccessMessage('Car model removed successfully!');
+                    updateDashboard();
+                } catch (error) {
+                    console.error('Error removing car model:', error);
+                    showErrorMessage('Failed to remove car model: ' + error.message);
+                }
+            } else {
+                const carName = item.querySelector('h4').textContent;
+                let carModels = JSON.parse(localStorage.getItem('carModels') || '[]');
+                carModels = carModels.filter(car => car.name !== carName);
+                localStorage.setItem('carModels', JSON.stringify(carModels));
+                item.remove();
+                showSuccessMessage('Car model removed!');
+            }
+        }
+
+        // Load admin data from Firestore
+        async function loadAdminDataFromFirestore() {
+            if (!firebaseInitialized) {
+                loadDataFromLocalStorage();
+                return;
+            }
+
+            try {
+                const bannerDoc = await db.collection('admin').doc('banner').get();
+                if (bannerDoc.exists()) {
+                    const bannerData = bannerDoc.data();
+                    if (bannerData.title) document.getElementById('bannerTitle').value = bannerData.title;
+                    if (bannerData.subtitle) document.getElementById('bannerSubtitle').value = bannerData.subtitle;
+                } else {
+                    loadBannerFromLocalStorage();
+                }
+
+                const personalInfoDoc = await db.collection('admin').doc('personalInfo').get();
+                if (personalInfoDoc.exists()) {
+                    const personalInfo = personalInfoDoc.data();
+                    if (personalInfo.name) document.getElementById('consultantName').value = personalInfo.name;
+                    if (personalInfo.title) document.getElementById('consultantTitle').value = personalInfo.title;
+                    if (personalInfo.image) {
+                        const preview = document.getElementById('profilePreview');
+                        const img = preview.querySelector('img');
+                        img.src = personalInfo.image;
+                        preview.style.display = 'block';
+                    }
+                } else {
+                    loadPersonalInfoFromLocalStorage();
+                }
+
+                const statsDoc = await db.collection('admin').doc('statistics').get();
+                if (statsDoc.exists()) {
+                    const stats = statsDoc.data();
+                    if (stats.customers) document.getElementById('happyCustomers').value = stats.customers;
+                    if (stats.experience) document.getElementById('yearsExperience').value = stats.experience;
+                    if (stats.satisfaction) document.getElementById('satisfaction').value = stats.satisfaction;
+                } else {
+                    loadStatisticsFromLocalStorage();
+                }
+
+                const servicesDoc = await db.collection('admin').doc('services').get();
+                if (servicesDoc.exists()) {
+                    const servicesData = servicesDoc.data();
+                    const services = servicesData.services || [];
+                    services.forEach((service, index) => {
+                        const input = document.getElementById('service' + (index + 1));
+                        if (input) input.value = service;
+                    });
+                } else {
+                    loadServicesFromLocalStorage();
+                }
+            } catch (error) {
+                console.error('Error loading admin data from Firestore:', error);
+                loadDataFromLocalStorage();
+            }
+        }
+
+        // Load data from localStorage (fallback)
+        function loadDataFromLocalStorage() {
+            loadBannerFromLocalStorage();
+            loadPersonalInfoFromLocalStorage();
+            loadStatisticsFromLocalStorage();
+            loadServicesFromLocalStorage();
+        }
+
+        function loadBannerFromLocalStorage() {
+            const bannerData = JSON.parse(localStorage.getItem('bannerData') || '{}');
+            if (bannerData.title) document.getElementById('bannerTitle').value = bannerData.title;
+            if (bannerData.subtitle) document.getElementById('bannerSubtitle').value = bannerData.subtitle;
+        }
+
+        function loadPersonalInfoFromLocalStorage() {
+            const personalInfo = JSON.parse(localStorage.getItem('personalInfo') || '{}');
+            if (personalInfo.name) document.getElementById('consultantName').value = personalInfo.name;
+            if (personalInfo.title) document.getElementById('consultantTitle').value = personalInfo.title;
+            if (personalInfo.image) {
+                const preview = document.getElementById('profilePreview');
+                const img = preview.querySelector('img');
+                img.src = personalInfo.image;
+                preview.style.display = 'block';
+            }
+        }
+
+        function loadStatisticsFromLocalStorage() {
+            const stats = JSON.parse(localStorage.getItem('statistics') || '{}');
+            if (stats.customers) document.getElementById('happyCustomers').value = stats.customers;
+            if (stats.experience) document.getElementById('yearsExperience').value = stats.experience;
+            if (stats.satisfaction) document.getElementById('satisfaction').value = stats.satisfaction;
+        }
+
+        function loadServicesFromLocalStorage() {
+            const services = JSON.parse(localStorage.getItem('services') || '[]');
+            services.forEach((service, index) => {
+                const input = document.getElementById('service' + (index + 1));
+                if (input) input.value = service;
+            });
+        }
+
+        // Load saved data on page load
+        window.addEventListener('load', function() {
+            loadFirebaseConfig();
+            loadDataFromLocalStorage();
+            updateDashboard();
+        });
+    </script>
+</body>
+</html>

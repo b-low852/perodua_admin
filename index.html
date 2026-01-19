@@ -308,6 +308,100 @@
             border-radius: 8px;
         }
 
+        .contact-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .contact-item:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-color: #ff1744;
+        }
+
+        .contact-item.new {
+            border-left: 5px solid #4caf50;
+            background: #f1f8f4;
+        }
+
+        .contact-item.contacted {
+            border-left: 5px solid #9e9e9e;
+            opacity: 0.8;
+        }
+
+        .contact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .contact-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .contact-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .contact-status.new {
+            background: #4caf50;
+            color: white;
+        }
+
+        .contact-status.contacted {
+            background: #9e9e9e;
+            color: white;
+        }
+
+        .contact-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .contact-detail {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .contact-message {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .contact-message p {
+            color: #666;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .contact-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .contact-timestamp {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
         .image-preview {
             margin-top: 10px;
             max-width: 200px;
@@ -366,37 +460,209 @@
             color: #856404;
         }
 
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 70px;
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .sidebar.mobile-hidden {
+            transform: translateX(-100%);
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
             }
 
-            .sidebar-header h1,
-            .sidebar-header p,
-            .sidebar-menu a span:not(:first-child) {
-                display: none;
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 280px;
+                height: 100vh;
+                z-index: 1000;
+                transform: translateX(0);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.mobile-hidden {
+                transform: translateX(-100%);
             }
 
             .main-content {
-                margin-left: 70px;
+                margin-left: 0;
+                padding: 80px 15px 20px 15px;
+            }
+
+            .top-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .top-bar h2 {
+                font-size: 22px;
+            }
+
+            .firebase-status {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .card {
+                padding: 20px 15px;
+                border-radius: 8px;
+            }
+
+            .card h3 {
+                font-size: 18px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .stat-card .value {
+                font-size: 24px;
             }
 
             .stats-grid,
             .services-grid {
                 grid-template-columns: 1fr;
             }
+
+            .form-group input,
+            .form-group textarea {
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            .btn {
+                width: 100%;
+                padding: 14px 20px;
+            }
+
+            .btn-secondary,
+            .btn-remove {
+                width: auto;
+                flex: 1;
+            }
+
+            .contact-details {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-actions {
+                flex-direction: column;
+            }
+
+            .contact-actions button {
+                width: 100%;
+            }
+
+            .contact-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .feature-input-group {
+                flex-direction: column;
+            }
+
+            .car-model-item img {
+                max-width: 100%;
+            }
+
+            .image-preview,
+            .logo-preview {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 70px 10px 15px 10px;
+            }
+
+            .top-bar h2 {
+                font-size: 18px;
+            }
+
+            .card {
+                padding: 15px 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-card h4 {
+                font-size: 12px;
+            }
+
+            .stat-card .value {
+                font-size: 20px;
+            }
+
+            .contact-name {
+                font-size: 16px;
+            }
+
+            .btn {
+                font-size: 14px;
+                padding: 12px 16px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h1>🚗 Perodua</h1>
             <p>Admin Dashboard</p>
         </div>
         <ul class="sidebar-menu">
             <li><a href="#" onclick="showSection('dashboard')" class="active"><span>📊</span> Dashboard</a></li>
+            <li><a href="#" onclick="showSection('contacts')"><span>📧</span> Contacts</a></li>
             <li><a href="#" onclick="showSection('cars')"><span>🚙</span> Car Models</a></li>
             <li><a href="#" onclick="showSection('banner')"><span>📢</span> Banner Settings</a></li>
             <li><a href="#" onclick="showSection('personal')"><span>👤</span> Personal Info</a></li>
@@ -451,6 +717,24 @@
                     <li>Manage your personal information</li>
                     <li>Edit statistics and services</li>
                 </ul>
+            </div>
+        </div>
+
+        <!-- Contacts Section -->
+        <div id="contacts" class="content-section">
+            <div class="card">
+                <h3>Customer Inquiries</h3>
+                <p style="color: #666; margin-bottom: 20px;">View and manage contact submissions from your website</p>
+                
+                <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="filterContacts('all')">All (<span id="countAll">0</span>)</button>
+                    <button class="btn btn-secondary" onclick="filterContacts('new')">New (<span id="countNew">0</span>)</button>
+                    <button class="btn btn-secondary" onclick="filterContacts('contacted')">Contacted (<span id="countContacted">0</span>)</button>
+                </div>
+
+                <div id="contactsList">
+                    <p style="color: #666; padding: 20px; text-align: center;">Loading contacts from Firebase...</p>
+                </div>
             </div>
         </div>
 
@@ -629,6 +913,24 @@
             appId: "1:491719396095:web:fd8549baf741d896f85aca"
         };
 
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('mobile-hidden');
+        }
+
+        // Close mobile menu on outside click
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuToggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+                    sidebar.classList.add('mobile-hidden');
+                }
+            }
+        });
+
         // Navigation
         function showSection(sectionId) {
             // Hide all sections
@@ -650,6 +952,7 @@
             // Update page title
             const titles = {
                 'dashboard': 'Dashboard',
+                'contacts': 'Customer Contacts',
                 'cars': 'Car Models',
                 'banner': 'Banner Settings',
                 'personal': 'Personal Information',
@@ -657,6 +960,11 @@
                 'services': 'Services & Features'
             };
             document.getElementById('pageTitle').textContent = titles[sectionId];
+
+            // Close mobile menu on mobile devices
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.add('mobile-hidden');
+            }
 
             // Scroll to top
             window.scrollTo(0, 0);
@@ -674,6 +982,7 @@
                 
                 // Load all data from Firestore
                 loadCarModelsFromFirestore();
+                loadContactsFromFirestore();
                 loadAdminDataFromFirestore();
                 updateDashboard();
                 
@@ -1119,6 +1428,195 @@
             }
         }
 
+        // Contacts Management
+        let contactsUnsubscribe = null;
+        let allContacts = [];
+        let currentFilter = 'all';
+
+        // Load contacts from Firestore with real-time updates
+        function loadContactsFromFirestore() {
+            if (!firebaseInitialized) {
+                const list = document.getElementById('contactsList');
+                list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">Connect to Firebase to view contacts</p>';
+                return;
+            }
+
+            try {
+                if (contactsUnsubscribe) {
+                    contactsUnsubscribe();
+                }
+                
+                contactsUnsubscribe = db.collection('contacts')
+                    .orderBy('timestamp', 'desc')
+                    .onSnapshot((snapshot) => {
+                        allContacts = [];
+                        
+                        if (snapshot.empty) {
+                            document.getElementById('contactsList').innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">No customer inquiries yet.</p>';
+                            updateContactCounts(0, 0, 0);
+                            return;
+                        }
+
+                        snapshot.forEach(doc => {
+                            const contact = doc.data();
+                            contact.id = doc.id;
+                            allContacts.push(contact);
+                        });
+                        
+                        displayContacts(currentFilter);
+                        updateContactCounts();
+                    }, (error) => {
+                        console.error('Error loading contacts:', error);
+                        showErrorMessage('Failed to load contacts: ' + error.message);
+                    });
+            } catch (error) {
+                console.error('Error setting up contacts listener:', error);
+                showErrorMessage('Failed to load contacts: ' + error.message);
+            }
+        }
+
+        // Display contacts based on filter
+        function displayContacts(filter) {
+            currentFilter = filter;
+            const list = document.getElementById('contactsList');
+            list.innerHTML = '';
+            
+            let filteredContacts = allContacts;
+            if (filter === 'new') {
+                filteredContacts = allContacts.filter(c => c.status === 'new');
+            } else if (filter === 'contacted') {
+                filteredContacts = allContacts.filter(c => c.status === 'contacted');
+            }
+            
+            if (filteredContacts.length === 0) {
+                list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">No contacts found.</p>';
+                return;
+            }
+            
+            filteredContacts.forEach(contact => {
+                addContactToList(contact);
+            });
+        }
+
+        // Add contact to list
+        function addContactToList(contact) {
+            const list = document.getElementById('contactsList');
+            const div = document.createElement('div');
+            div.className = `contact-item ${contact.status || 'new'}`;
+            div.setAttribute('data-contact-id', contact.id);
+            
+            const timestamp = contact.timestamp ? new Date(contact.timestamp).toLocaleString() : 'N/A';
+            
+            div.innerHTML = `
+                <div class="contact-header">
+                    <div>
+                        <div class="contact-name">${contact.name || 'No Name'}</div>
+                    </div>
+                    <span class="contact-status ${contact.status || 'new'}">${contact.status === 'contacted' ? 'Contacted' : 'New'}</span>
+                </div>
+                <div class="contact-details">
+                    <div class="contact-detail">
+                        <span>📧</span>
+                        <span>${contact.email || 'No email'}</span>
+                    </div>
+                    <div class="contact-detail">
+                        <span>📱</span>
+                        <span>${contact.phone || 'No phone'}</span>
+                    </div>
+                    <div class="contact-detail">
+                        <span>🚙</span>
+                        <span>Interested in: ${contact.interestedModel || 'Not specified'}</span>
+                    </div>
+                </div>
+                <div class="contact-message">
+                    <strong>Message:</strong>
+                    <p>${contact.message || 'No message'}</p>
+                </div>
+                <div class="contact-actions">
+                    ${contact.status !== 'contacted' ? 
+                        `<button class="btn btn-secondary" onclick="markAsContacted('${contact.id}')">✓ Mark as Contacted</button>` : 
+                        `<button class="btn btn-secondary" onclick="markAsNew('${contact.id}')">↺ Mark as New</button>`
+                    }
+                    <button class="btn btn-remove" onclick="deleteContact('${contact.id}')">🗑️ Delete</button>
+                </div>
+                <div class="contact-timestamp">Received: ${timestamp}</div>
+            `;
+            list.appendChild(div);
+        }
+
+        // Update contact counts
+        function updateContactCounts() {
+            const total = allContacts.length;
+            const newCount = allContacts.filter(c => c.status === 'new').length;
+            const contactedCount = allContacts.filter(c => c.status === 'contacted').length;
+            
+            document.getElementById('countAll').textContent = total;
+            document.getElementById('countNew').textContent = newCount;
+            document.getElementById('countContacted').textContent = contactedCount;
+        }
+
+        // Filter contacts
+        function filterContacts(filter) {
+            displayContacts(filter);
+        }
+
+        // Mark as contacted
+        async function markAsContacted(contactId) {
+            if (!firebaseInitialized) {
+                showErrorMessage('Firebase not connected');
+                return;
+            }
+
+            try {
+                await db.collection('contacts').doc(contactId).update({
+                    status: 'contacted',
+                    contactedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showSuccessMessage('Contact marked as contacted');
+            } catch (error) {
+                console.error('Error updating contact:', error);
+                showErrorMessage('Failed to update contact: ' + error.message);
+            }
+        }
+
+        // Mark as new
+        async function markAsNew(contactId) {
+            if (!firebaseInitialized) {
+                showErrorMessage('Firebase not connected');
+                return;
+            }
+
+            try {
+                await db.collection('contacts').doc(contactId).update({
+                    status: 'new'
+                });
+                showSuccessMessage('Contact marked as new');
+            } catch (error) {
+                console.error('Error updating contact:', error);
+                showErrorMessage('Failed to update contact: ' + error.message);
+            }
+        }
+
+        // Delete contact
+        async function deleteContact(contactId) {
+            if (!confirm('Are you sure you want to delete this contact?')) {
+                return;
+            }
+
+            if (!firebaseInitialized) {
+                showErrorMessage('Firebase not connected');
+                return;
+            }
+
+            try {
+                await db.collection('contacts').doc(contactId).delete();
+                showSuccessMessage('Contact deleted successfully');
+            } catch (error) {
+                console.error('Error deleting contact:', error);
+                showErrorMessage('Failed to delete contact: ' + error.message);
+            }
+        }
+
         // Load admin data from Firestore
         async function loadAdminDataFromFirestore() {
             if (!firebaseInitialized) {
@@ -1224,6 +1722,21 @@
             loadFirebaseConfig();
             loadDataFromLocalStorage();
             updateDashboard();
+            
+            // Initialize mobile menu state
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.add('mobile-hidden');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('mobile-hidden');
+            } else {
+                sidebar.classList.add('mobile-hidden');
+            }
         });
     </script>
 </body>

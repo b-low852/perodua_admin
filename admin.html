@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perodua Admin Dashboard</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -252,6 +256,50 @@
             Changes saved successfully!
         </div>
 
+        <div id="errorMessage" class="success-message" style="background: #f44336; display: none;">
+            <span id="errorText"></span>
+        </div>
+
+        <!-- Firebase Configuration Section -->
+        <div class="card full-width" style="margin-bottom: 25px; background: #fff3cd; border: 2px solid #ffc107;">
+            <h2>⚙️ Firebase Configuration</h2>
+            <p style="color: #856404; margin-bottom: 15px;">Enter your Firebase configuration to connect to Firestore database</p>
+            <p style="color: #856404; margin-bottom: 15px; font-size: 12px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 5px;">
+                <strong>⚠️ Important:</strong> Make sure to update your Firestore security rules to allow read/write access. 
+                Go to Firebase Console → Firestore Database → Rules and update the rules to allow access to the 'cars' collection.
+            </p>
+            <form id="firebaseConfigForm">
+                <div class="dashboard-grid">
+                    <div class="form-group">
+                        <label for="apiKey">API Key</label>
+                        <input type="text" id="apiKey" placeholder="AIzaSy..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="authDomain">Auth Domain</label>
+                        <input type="text" id="authDomain" placeholder="your-project.firebaseapp.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectId">Project ID</label>
+                        <input type="text" id="projectId" placeholder="perodua" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="storageBucket">Storage Bucket</label>
+                        <input type="text" id="storageBucket" placeholder="your-project.appspot.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="messagingSenderId">Messaging Sender ID</label>
+                        <input type="text" id="messagingSenderId" placeholder="123456789" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appId">App ID</label>
+                        <input type="text" id="appId" placeholder="1:123456789:web:..." required>
+                    </div>
+                </div>
+                <button type="submit" class="btn">🔌 Connect to Firebase</button>
+                <span id="firebaseStatus" style="margin-left: 15px; font-weight: 600;"></span>
+            </form>
+        </div>
+
         <div class="dashboard-grid">
             <!-- Banner Section -->
             <div class="card full-width">
@@ -264,10 +312,6 @@
                     <div class="form-group">
                         <label for="bannerSubtitle">Banner Subtitle</label>
                         <textarea id="bannerSubtitle" placeholder="Enter banner description">Experience excellence with Malaysia's #1 car brand. Premium quality, unbeatable prices, exceptional service.</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="collectionBadge">Collection Badge Text</label>
-                        <input type="text" id="collectionBadge" placeholder="e.g., 2026 COLLECTION" value="2026 COLLECTION">
                     </div>
                     <button type="submit" class="btn">💾 Save Banner</button>
                 </form>
@@ -399,18 +443,7 @@
                 <div class="car-models-list">
                     <h3 style="color: #333; margin-bottom: 15px;">📋 Existing Car Models</h3>
                     <div id="carModelsList">
-                        <div class="car-model-item">
-                            <h4>Myvi</h4>
-                            <p><strong>Price:</strong> RM 46,500</p>
-                            <p><strong>Features:</strong> 1.3L & 1.5L Engine, ASA 3.0 Safety, Best Seller Model</p>
-                            <button class="btn btn-remove" style="margin-top: 10px;" onclick="removeCarModel(this)">🗑️ Remove</button>
-                        </div>
-                        <div class="car-model-item">
-                            <h4>Ativa</h4>
-                            <p><strong>Price:</strong> RM 66,700</p>
-                            <p><strong>Features:</strong> Premium SUV, 1.0L Turbo, 5-Star Safety</p>
-                            <button class="btn btn-remove" style="margin-top: 10px;" onclick="removeCarModel(this)">🗑️ Remove</button>
-                        </div>
+                        <p style="color: #666; padding: 20px; text-align: center;">Loading car models from Firebase...</p>
                     </div>
                 </div>
             </div>
@@ -418,6 +451,109 @@
     </div>
 
     <script>
+        // Firebase variables
+        let db = null;
+        let storage = null;
+        let firebaseInitialized = false;
+
+        // Initialize Firebase
+        function initializeFirebase(config) {
+            try {
+                firebase.initializeApp(config);
+                db = firebase.firestore();
+                storage = firebase.storage();
+                firebaseInitialized = true;
+                document.getElementById('firebaseStatus').textContent = '✅ Connected';
+                document.getElementById('firebaseStatus').style.color = '#4caf50';
+                showSuccessMessage();
+                
+                // Load all data from Firestore
+                loadCarModelsFromFirestore();
+                loadAdminDataFromFirestore();
+                
+                return true;
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                showErrorMessage('Failed to connect to Firebase: ' + error.message);
+                return false;
+            }
+        }
+
+        // Default Firebase configuration
+        const defaultFirebaseConfig = {
+            apiKey: "AIzaSyAaeDEqg9Bqiew3LaMX5LWG8AWnoVbaO_c",
+            authDomain: "perodua-2bab4.firebaseapp.com",
+            projectId: "perodua-2bab4",
+            storageBucket: "perodua-2bab4.firebasestorage.app",
+            messagingSenderId: "491719396095",
+            appId: "1:491719396095:web:fd8549baf741d896f85aca"
+        };
+
+        // Load Firebase config from localStorage or use default
+        function loadFirebaseConfig() {
+            let config = null;
+            const savedConfig = localStorage.getItem('firebaseConfig');
+            
+            if (savedConfig) {
+                try {
+                    config = JSON.parse(savedConfig);
+                } catch (error) {
+                    console.error('Error parsing saved config:', error);
+                    config = defaultFirebaseConfig;
+                }
+            } else {
+                // Use default config if nothing saved
+                config = defaultFirebaseConfig;
+                // Save default config to localStorage
+                localStorage.setItem('firebaseConfig', JSON.stringify(config));
+            }
+            
+            // Populate form fields
+            document.getElementById('apiKey').value = config.apiKey || '';
+            document.getElementById('authDomain').value = config.authDomain || '';
+            document.getElementById('projectId').value = config.projectId || '';
+            document.getElementById('storageBucket').value = config.storageBucket || '';
+            document.getElementById('messagingSenderId').value = config.messagingSenderId || '';
+            document.getElementById('appId').value = config.appId || '';
+            
+            // Auto-initialize if config exists
+            if (config.apiKey && config.projectId) {
+                initializeFirebase(config);
+            }
+        }
+
+        // Firebase config form submission
+        document.getElementById('firebaseConfigForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const config = {
+                apiKey: document.getElementById('apiKey').value,
+                authDomain: document.getElementById('authDomain').value,
+                projectId: document.getElementById('projectId').value,
+                storageBucket: document.getElementById('storageBucket').value,
+                messagingSenderId: document.getElementById('messagingSenderId').value,
+                appId: document.getElementById('appId').value
+            };
+            
+            // Save config to localStorage
+            localStorage.setItem('firebaseConfig', JSON.stringify(config));
+            
+            // Initialize Firebase
+            if (initializeFirebase(config)) {
+                showSuccessMessage();
+            }
+        });
+
+        // Show error message
+        function showErrorMessage(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
         // Preview image function
         function previewImage(input, previewId) {
             const preview = document.getElementById(previewId);
@@ -460,63 +596,204 @@
         }
 
         // Banner form submission
-        document.getElementById('bannerForm').addEventListener('submit', function(e) {
+        document.getElementById('bannerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const data = {
                 title: document.getElementById('bannerTitle').value,
                 subtitle: document.getElementById('bannerSubtitle').value,
-                badge: document.getElementById('collectionBadge').value
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
-            console.log('Banner Data:', data);
-            localStorage.setItem('bannerData', JSON.stringify(data));
-            showSuccessMessage();
+            
+            try {
+                // Save to Firestore
+                if (firebaseInitialized) {
+                    await db.collection('admin').doc('banner').set(data, { merge: true });
+                }
+                
+                // Also save to localStorage as backup
+                localStorage.setItem('bannerData', JSON.stringify(data));
+                
+                console.log('Banner Data saved:', data);
+                showSuccessMessage();
+            } catch (error) {
+                console.error('Error saving banner:', error);
+                showErrorMessage('Failed to save banner: ' + error.message);
+                
+                // Fallback to localStorage only
+                localStorage.setItem('bannerData', JSON.stringify(data));
+                showSuccessMessage();
+            }
         });
 
+        // Upload profile image to Firebase Storage
+        async function uploadProfileImageToFirebase(file) {
+            if (!file || !firebaseInitialized) return '';
+            
+            try {
+                const fileName = `profile/profile_${Date.now()}_${file.name}`;
+                const storageRef = storage.ref().child(fileName);
+                const snapshot = await storageRef.put(file);
+                const downloadURL = await snapshot.ref.getDownloadURL();
+                return downloadURL;
+            } catch (error) {
+                console.error('Error uploading profile image:', error);
+                showErrorMessage('Failed to upload profile image: ' + error.message);
+                return '';
+            }
+        }
+
         // Personal info form submission
-        document.getElementById('personalInfoForm').addEventListener('submit', function(e) {
+        document.getElementById('personalInfoForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const data = {
-                name: document.getElementById('consultantName').value,
-                title: document.getElementById('consultantTitle').value,
-                image: document.querySelector('#profilePreview img').src || ''
-            };
-            console.log('Personal Info:', data);
-            localStorage.setItem('personalInfo', JSON.stringify(data));
-            showSuccessMessage();
+            
+            const consultantName = document.getElementById('consultantName').value;
+            const consultantTitle = document.getElementById('consultantTitle').value;
+            const profileImageFile = document.getElementById('profileImage').files[0];
+            const profileImageSrc = document.querySelector('#profilePreview img').src || '';
+            
+            try {
+                let imageUrl = '';
+                
+                // Upload image if file is selected
+                if (profileImageFile) {
+                    imageUrl = await uploadProfileImageToFirebase(profileImageFile);
+                } else if (profileImageSrc && profileImageSrc.startsWith('data:')) {
+                    // If it's a base64 image, convert to blob and upload
+                    const response = await fetch(profileImageSrc);
+                    const blob = await response.blob();
+                    imageUrl = await uploadProfileImageToFirebase(blob);
+                } else {
+                    imageUrl = profileImageSrc;
+                }
+
+                const data = {
+                    name: consultantName,
+                    title: consultantTitle,
+                    image: imageUrl,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // Save to Firestore (using a single document for personal info)
+                if (firebaseInitialized) {
+                    await db.collection('admin').doc('personalInfo').set(data, { merge: true });
+                }
+                
+                // Also save to localStorage as backup
+                localStorage.setItem('personalInfo', JSON.stringify(data));
+                
+                console.log('Personal Info saved:', data);
+                showSuccessMessage();
+            } catch (error) {
+                console.error('Error saving personal info:', error);
+                showErrorMessage('Failed to save personal info: ' + error.message);
+                
+                // Fallback to localStorage only
+                const data = {
+                    name: consultantName,
+                    title: consultantTitle,
+                    image: profileImageSrc
+                };
+                localStorage.setItem('personalInfo', JSON.stringify(data));
+                showSuccessMessage();
+            }
         });
 
         // Statistics form submission
-        document.getElementById('statsForm').addEventListener('submit', function(e) {
+        document.getElementById('statsForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
             const data = {
                 customers: document.getElementById('happyCustomers').value,
                 experience: document.getElementById('yearsExperience').value,
-                satisfaction: document.getElementById('satisfaction').value
+                satisfaction: document.getElementById('satisfaction').value,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
-            console.log('Statistics:', data);
-            localStorage.setItem('statistics', JSON.stringify(data));
-            showSuccessMessage();
+
+            try {
+                // Save to Firestore (using a single document for statistics)
+                if (firebaseInitialized) {
+                    await db.collection('admin').doc('statistics').set(data, { merge: true });
+                }
+                
+                // Also save to localStorage as backup
+                localStorage.setItem('statistics', JSON.stringify(data));
+                
+                console.log('Statistics saved:', data);
+                showSuccessMessage();
+            } catch (error) {
+                console.error('Error saving statistics:', error);
+                showErrorMessage('Failed to save statistics: ' + error.message);
+                
+                // Fallback to localStorage only
+                localStorage.setItem('statistics', JSON.stringify(data));
+                showSuccessMessage();
+            }
         });
 
         // Services form submission
-        document.getElementById('servicesForm').addEventListener('submit', function(e) {
+        document.getElementById('servicesForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const services = [];
             for (let i = 1; i <= 6; i++) {
                 const service = document.getElementById('service' + i).value;
                 if (service) services.push(service);
             }
-            console.log('Services:', services);
-            localStorage.setItem('services', JSON.stringify(services));
-            showSuccessMessage();
+            
+            const data = {
+                services: services,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            try {
+                // Save to Firestore
+                if (firebaseInitialized) {
+                    await db.collection('admin').doc('services').set(data, { merge: true });
+                }
+                
+                // Also save to localStorage as backup
+                localStorage.setItem('services', JSON.stringify(services));
+                
+                console.log('Services saved:', services);
+                showSuccessMessage();
+            } catch (error) {
+                console.error('Error saving services:', error);
+                showErrorMessage('Failed to save services: ' + error.message);
+                
+                // Fallback to localStorage only
+                localStorage.setItem('services', JSON.stringify(services));
+                showSuccessMessage();
+            }
         });
 
+        // Upload image to Firebase Storage and get URL
+        async function uploadImageToFirebase(file, carName) {
+            if (!file || !firebaseInitialized) return '';
+            
+            try {
+                const fileName = `cars/${carName}_${Date.now()}_${file.name}`;
+                const storageRef = storage.ref().child(fileName);
+                const snapshot = await storageRef.put(file);
+                const downloadURL = await snapshot.ref.getDownloadURL();
+                return downloadURL;
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                showErrorMessage('Failed to upload image: ' + error.message);
+                return '';
+            }
+        }
+
         // Car model form submission
-        document.getElementById('carModelForm').addEventListener('submit', function(e) {
+        document.getElementById('carModelForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            if (!firebaseInitialized) {
+                showErrorMessage('Please connect to Firebase first!');
+                return;
+            }
             
             const carName = document.getElementById('carName').value;
             const carPrice = document.getElementById('carPrice').value;
+            const carImageFile = document.getElementById('carImage').files[0];
             const carImageSrc = document.querySelector('#carImagePreview img').src || '';
             
             const features = [];
@@ -526,98 +803,286 @@
                 }
             });
 
-            const carModel = {
-                name: carName,
-                price: carPrice,
-                features: features,
-                image: carImageSrc
-            };
+            try {
+                let imageUrl = '';
+                
+                // Upload image if file is selected
+                if (carImageFile) {
+                    imageUrl = await uploadImageToFirebase(carImageFile, carName);
+                } else if (carImageSrc && carImageSrc.startsWith('data:')) {
+                    // If it's a base64 image, convert to blob and upload
+                    const response = await fetch(carImageSrc);
+                    const blob = await response.blob();
+                    imageUrl = await uploadImageToFirebase(blob, carName);
+                } else {
+                    imageUrl = carImageSrc;
+                }
 
-            // Get existing car models from localStorage
-            let carModels = JSON.parse(localStorage.getItem('carModels') || '[]');
-            carModels.push(carModel);
-            localStorage.setItem('carModels', JSON.stringify(carModels));
+                const carModel = {
+                    name: carName,
+                    price: carPrice,
+                    features: features,
+                    image: imageUrl,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
 
-            // Add to display list
-            addCarModelToList(carModel);
+                // Add to Firestore
+                await db.collection('cars').add(carModel);
+                
+                // Add to display list
+                carModel.id = Date.now().toString(); // Temporary ID for display
+                addCarModelToList(carModel);
 
-            // Reset form
-            this.reset();
-            document.getElementById('carImagePreview').style.display = 'none';
-            
-            // Reset features to 3 inputs
-            const container = document.getElementById('featuresContainer');
-            container.innerHTML = `
-                <div class="feature-input-group">
-                    <input type="text" class="feature-input" placeholder="e.g., 1.3L & 1.5L Engine">
-                </div>
-                <div class="feature-input-group">
-                    <input type="text" class="feature-input" placeholder="e.g., ASA 3.0 Safety">
-                </div>
-                <div class="feature-input-group">
-                    <input type="text" class="feature-input" placeholder="e.g., Best Seller Model">
-                </div>
-            `;
+                // Reset form
+                this.reset();
+                document.getElementById('carImagePreview').style.display = 'none';
+                
+                // Reset features to 3 inputs
+                const container = document.getElementById('featuresContainer');
+                container.innerHTML = `
+                    <div class="feature-input-group">
+                        <input type="text" class="feature-input" placeholder="e.g., 1.3L & 1.5L Engine">
+                    </div>
+                    <div class="feature-input-group">
+                        <input type="text" class="feature-input" placeholder="e.g., ASA 3.0 Safety">
+                    </div>
+                    <div class="feature-input-group">
+                        <input type="text" class="feature-input" placeholder="e.g., Best Seller Model">
+                    </div>
+                `;
 
-            showSuccessMessage();
-            console.log('Car Model Added:', carModel);
+                showSuccessMessage();
+                console.log('Car Model Added to Firestore:', carModel);
+            } catch (error) {
+                console.error('Error adding car model:', error);
+                showErrorMessage('Failed to add car model: ' + error.message);
+            }
         });
 
         // Add car model to list
-        function addCarModelToList(carModel) {
+        function addCarModelToList(carModel, docId = null) {
             const list = document.getElementById('carModelsList');
             const div = document.createElement('div');
             div.className = 'car-model-item';
+            if (docId) {
+                div.setAttribute('data-doc-id', docId);
+            }
             div.innerHTML = `
                 <h4>${carModel.name}</h4>
                 <p><strong>Price:</strong> ${carModel.price}</p>
-                <p><strong>Features:</strong> ${carModel.features.join(', ')}</p>
+                <p><strong>Features:</strong> ${carModel.features ? carModel.features.join(', ') : 'No features'}</p>
+                ${carModel.image ? `<img src="${carModel.image}" alt="${carModel.name}" style="max-width: 200px; margin-top: 10px; border-radius: 8px;">` : ''}
                 <button class="btn btn-remove" style="margin-top: 10px;" onclick="removeCarModel(this)">🗑️ Remove</button>
             `;
             list.appendChild(div);
         }
 
-        // Remove car model
-        function removeCarModel(button) {
-            if (confirm('Are you sure you want to remove this car model?')) {
-                const item = button.parentElement;
-                const carName = item.querySelector('h4').textContent;
+        // Real-time listener for car models
+        let carModelsUnsubscribe = null;
+
+        // Load car models from Firestore with real-time updates
+        function loadCarModelsFromFirestore() {
+            if (!firebaseInitialized) {
+                // Load from localStorage as fallback
+                const carModels = JSON.parse(localStorage.getItem('carModels') || '[]');
+                const list = document.getElementById('carModelsList');
+                list.innerHTML = '';
+                if (carModels.length === 0) {
+                    list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">No car models found. Add your first car model above!</p>';
+                } else {
+                    carModels.forEach(car => {
+                        addCarModelToList(car);
+                    });
+                }
+                return;
+            }
+
+            try {
+                const list = document.getElementById('carModelsList');
                 
-                // Remove from localStorage
+                // Unsubscribe from previous listener if exists
+                if (carModelsUnsubscribe) {
+                    carModelsUnsubscribe();
+                }
+                
+                // Set up real-time listener
+                carModelsUnsubscribe = db.collection('cars')
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot((snapshot) => {
+                        list.innerHTML = ''; // Clear existing items
+                        
+                        if (snapshot.empty) {
+                            list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">No car models found. Add your first car model above!</p>';
+                            return;
+                        }
+
+                        snapshot.forEach(doc => {
+                            const carModel = doc.data();
+                            addCarModelToList(carModel, doc.id);
+                        });
+                    }, (error) => {
+                        console.error('Error loading car models:', error);
+                        showErrorMessage('Failed to load car models: ' + error.message);
+                        
+                        // Fallback to localStorage
+                        const carModels = JSON.parse(localStorage.getItem('carModels') || '[]');
+                        list.innerHTML = '';
+                        if (carModels.length === 0) {
+                            list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">No car models found. Add your first car model above!</p>';
+                        } else {
+                            carModels.forEach(car => {
+                                addCarModelToList(car);
+                            });
+                        }
+                    });
+            } catch (error) {
+                console.error('Error setting up car models listener:', error);
+                showErrorMessage('Failed to load car models: ' + error.message);
+            }
+        }
+
+        // Remove car model
+        async function removeCarModel(button) {
+            if (!confirm('Are you sure you want to remove this car model?')) {
+                return;
+            }
+
+            const item = button.parentElement;
+            const docId = item.getAttribute('data-doc-id');
+            
+            if (firebaseInitialized && docId) {
+                try {
+                    await db.collection('cars').doc(docId).delete();
+                    item.remove();
+                    showSuccessMessage();
+                } catch (error) {
+                    console.error('Error removing car model:', error);
+                    showErrorMessage('Failed to remove car model: ' + error.message);
+                }
+            } else {
+                // Fallback to localStorage
+                const carName = item.querySelector('h4').textContent;
                 let carModels = JSON.parse(localStorage.getItem('carModels') || '[]');
                 carModels = carModels.filter(car => car.name !== carName);
                 localStorage.setItem('carModels', JSON.stringify(carModels));
-                
                 item.remove();
                 showSuccessMessage();
             }
         }
 
-        // Load saved data on page load
-        window.addEventListener('load', function() {
-            // Load banner data
+        // Load admin data from Firestore
+        async function loadAdminDataFromFirestore() {
+            if (!firebaseInitialized) {
+                loadDataFromLocalStorage();
+                return;
+            }
+
+            try {
+                // Load banner data
+                const bannerDoc = await db.collection('admin').doc('banner').get();
+                if (bannerDoc.exists()) {
+                    const bannerData = bannerDoc.data();
+                    if (bannerData.title) document.getElementById('bannerTitle').value = bannerData.title;
+                    if (bannerData.subtitle) document.getElementById('bannerSubtitle').value = bannerData.subtitle;
+                } else {
+                    loadBannerFromLocalStorage();
+                }
+
+                // Load personal info
+                const personalInfoDoc = await db.collection('admin').doc('personalInfo').get();
+                if (personalInfoDoc.exists()) {
+                    const personalInfo = personalInfoDoc.data();
+                    if (personalInfo.name) document.getElementById('consultantName').value = personalInfo.name;
+                    if (personalInfo.title) document.getElementById('consultantTitle').value = personalInfo.title;
+                    if (personalInfo.image) {
+                        const preview = document.getElementById('profilePreview');
+                        const img = preview.querySelector('img');
+                        img.src = personalInfo.image;
+                        preview.style.display = 'block';
+                    }
+                } else {
+                    loadPersonalInfoFromLocalStorage();
+                }
+
+                // Load statistics
+                const statsDoc = await db.collection('admin').doc('statistics').get();
+                if (statsDoc.exists()) {
+                    const stats = statsDoc.data();
+                    if (stats.customers) document.getElementById('happyCustomers').value = stats.customers;
+                    if (stats.experience) document.getElementById('yearsExperience').value = stats.experience;
+                    if (stats.satisfaction) document.getElementById('satisfaction').value = stats.satisfaction;
+                } else {
+                    loadStatisticsFromLocalStorage();
+                }
+
+                // Load services
+                const servicesDoc = await db.collection('admin').doc('services').get();
+                if (servicesDoc.exists()) {
+                    const servicesData = servicesDoc.data();
+                    const services = servicesData.services || [];
+                    services.forEach((service, index) => {
+                        const input = document.getElementById('service' + (index + 1));
+                        if (input) input.value = service;
+                    });
+                } else {
+                    loadServicesFromLocalStorage();
+                }
+            } catch (error) {
+                console.error('Error loading admin data from Firestore:', error);
+                loadDataFromLocalStorage();
+            }
+        }
+
+        // Load data from localStorage (fallback)
+        function loadDataFromLocalStorage() {
+            loadBannerFromLocalStorage();
+            loadPersonalInfoFromLocalStorage();
+            loadStatisticsFromLocalStorage();
+            loadServicesFromLocalStorage();
+        }
+
+        function loadBannerFromLocalStorage() {
             const bannerData = JSON.parse(localStorage.getItem('bannerData') || '{}');
             if (bannerData.title) document.getElementById('bannerTitle').value = bannerData.title;
             if (bannerData.subtitle) document.getElementById('bannerSubtitle').value = bannerData.subtitle;
-            if (bannerData.badge) document.getElementById('collectionBadge').value = bannerData.badge;
+        }
 
-            // Load personal info
+        function loadPersonalInfoFromLocalStorage() {
             const personalInfo = JSON.parse(localStorage.getItem('personalInfo') || '{}');
             if (personalInfo.name) document.getElementById('consultantName').value = personalInfo.name;
             if (personalInfo.title) document.getElementById('consultantTitle').value = personalInfo.title;
+            if (personalInfo.image) {
+                const preview = document.getElementById('profilePreview');
+                const img = preview.querySelector('img');
+                img.src = personalInfo.image;
+                preview.style.display = 'block';
+            }
+        }
 
-            // Load statistics
+        function loadStatisticsFromLocalStorage() {
             const stats = JSON.parse(localStorage.getItem('statistics') || '{}');
             if (stats.customers) document.getElementById('happyCustomers').value = stats.customers;
             if (stats.experience) document.getElementById('yearsExperience').value = stats.experience;
             if (stats.satisfaction) document.getElementById('satisfaction').value = stats.satisfaction;
+        }
 
-            // Load services
+        function loadServicesFromLocalStorage() {
             const services = JSON.parse(localStorage.getItem('services') || '[]');
             services.forEach((service, index) => {
                 const input = document.getElementById('service' + (index + 1));
                 if (input) input.value = service;
             });
+        }
+
+        // Load saved data on page load
+        window.addEventListener('load', function() {
+            // Load Firebase configuration (this will auto-connect and trigger loadAdminDataFromFirestore)
+            loadFirebaseConfig();
+            
+            // Load from localStorage first (for immediate display)
+            loadDataFromLocalStorage();
+            
+            // Car models will be loaded by loadCarModelsFromFirestore() after Firebase initialization
         });
     </script>
 </body>

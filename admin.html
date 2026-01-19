@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perodua Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            color: #ff1744;
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #ff1744;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group textarea,
+        .form-group input[type="file"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="number"]:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #ff1744;
+            box-shadow: 0 0 0 3px rgba(255, 23, 68, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .feature-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .feature-input-group input {
+            flex: 1;
+        }
+
+        .btn {
+            background: #ff1744;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 23, 68, 0.3);
+        }
+
+        .btn:hover {
+            background: #d50032;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 23, 68, 0.4);
+        }
+
+        .btn-secondary {
+            background: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            font-size: 13px;
+            padding: 8px 15px;
+        }
+
+        .btn-secondary:hover {
+            background: #5568d3;
+        }
+
+        .btn-remove {
+            background: #f44336;
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+            font-size: 13px;
+            padding: 8px 15px;
+        }
+
+        .btn-remove:hover {
+            background: #da190b;
+        }
+
+        .car-models-list {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .car-model-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff1744;
+        }
+
+        .car-model-item h4 {
+            color: #ff1744;
+            margin-bottom: 5px;
+        }
+
+        .car-model-item p {
+            color: #666;
+            font-size: 13px;
+            margin: 3px 0;
+        }
+
+        .image-preview {
+            margin-top: 10px;
+            max-width: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .image-preview img {
+            width: 100%;
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .success-message {
+            background: #4caf50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .logo-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .logo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid,
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Perodua Admin Dashboard</h1>
+            <p>Manage your website content, car models, and personal information</p>
+        </div>
+
+        <div id="successMessage" class="success-message">
+            Changes saved successfully!
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Banner Section -->
+            <div class="card full-width">
+                <h2>📢 Hero Banner Settings</h2>
+                <form id="bannerForm">
+                    <div class="form-group">
+                        <label for="bannerTitle">Banner Title</label>
+                        <input type="text" id="bannerTitle" placeholder="e.g., Drive Your Dream Perodua Today" value="Drive Your Dream Perodua Today">
+                    </div>
+                    <div class="form-group">
+                        <label for="bannerSubtitle">Banner Subtitle</label>
+                        <textarea id="bannerSubtitle" placeholder="Enter banner description">Experience excellence with Malaysia's #1 car brand. Premium quality, unbeatable prices, exceptional service.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="collectionBadge">Collection Badge Text</label>
+                        <input type="text" id="collectionBadge" placeholder="e.g., 2026 COLLECTION" value="2026 COLLECTION">
+                    </div>
+                    <button type="submit" class="btn">💾 Save Banner</button>
+                </form>
+            </div>
+
+            <!-- Personal Info Section -->
+            <div class="card">
+                <h2>👤 Personal Information</h2>
+                <form id="personalInfoForm">
+                    <div class="form-group">
+                        <label for="consultantName">Consultant Name</label>
+                        <input type="text" id="consultantName" placeholder="Enter name" value="Herwan">
+                    </div>
+                    <div class="form-group">
+                        <label for="consultantTitle">Title/Position</label>
+                        <input type="text" id="consultantTitle" placeholder="Enter title" value="Authorized Perodua Consultant">
+                    </div>
+                    <div class="form-group">
+                        <label for="profileImage">Profile Image</label>
+                        <input type="file" id="profileImage" accept="image/*" onchange="previewImage(this, 'profilePreview')">
+                        <div id="profilePreview" class="logo-preview" style="display:none;">
+                            <img src="" alt="Profile Preview">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">💾 Save Personal Info</button>
+                </form>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="card">
+                <h2>📊 Statistics</h2>
+                <form id="statsForm">
+                    <div class="stats-grid">
+                        <div class="form-group">
+                            <label for="happyCustomers">Happy Customers</label>
+                            <input type="text" id="happyCustomers" placeholder="500+" value="500+">
+                        </div>
+                        <div class="form-group">
+                            <label for="yearsExperience">Years Experience</label>
+                            <input type="text" id="yearsExperience" placeholder="5+" value="5+">
+                        </div>
+                        <div class="form-group">
+                            <label for="satisfaction">Satisfaction Rate</label>
+                            <input type="text" id="satisfaction" placeholder="100%" value="100%">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">💾 Save Statistics</button>
+                </form>
+            </div>
+
+            <!-- Services Section -->
+            <div class="card full-width">
+                <h2>🛠️ Services & Features</h2>
+                <form id="servicesForm">
+                    <div class="services-grid">
+                        <div class="form-group">
+                            <label for="service1">Service 1</label>
+                            <input type="text" id="service1" placeholder="Enter service" value="Best Price Guarantee">
+                        </div>
+                        <div class="form-group">
+                            <label for="service2">Service 2</label>
+                            <input type="text" id="service2" placeholder="Enter service" value="Trade-In Welcome">
+                        </div>
+                        <div class="form-group">
+                            <label for="service3">Service 3</label>
+                            <input type="text" id="service3" placeholder="Enter service" value="Easy Loan Approval">
+                        </div>
+                        <div class="form-group">
+                            <label for="service4">Service 4</label>
+                            <input type="text" id="service4" placeholder="Enter service" value="Free Test Drive">
+                        </div>
+                        <div class="form-group">
+                            <label for="service5">Service 5</label>
+                            <input type="text" id="service5" placeholder="Enter service" value="24/7 Support">
+                        </div>
+                        <div class="form-group">
+                            <label for="service6">Service 6</label>
+                            <input type="text" id="service6" placeholder="Enter service" value="Special Promotions">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">💾 Save Services</button>
+                </form>
+            </div>
+
+            <!-- Add Car Model Section -->
+            <div class="card full-width">
+                <h2>🚙 Add New Car Model</h2>
+                <form id="carModelForm">
+                    <div class="dashboard-grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="carName">Car Model Name</label>
+                                <input type="text" id="carName" placeholder="e.g., Myvi" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="carPrice">Price (RM)</label>
+                                <input type="text" id="carPrice" placeholder="e.g., RM 46,500" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="carImage">Car Image</label>
+                                <input type="file" id="carImage" accept="image/*" onchange="previewImage(this, 'carImagePreview')">
+                                <div id="carImagePreview" class="image-preview" style="display:none;">
+                                    <img src="" alt="Car Preview">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label>Car Features (Add up to 5)</label>
+                                <div id="featuresContainer">
+                                    <div class="feature-input-group">
+                                        <input type="text" class="feature-input" placeholder="e.g., 1.3L & 1.5L Engine">
+                                    </div>
+                                    <div class="feature-input-group">
+                                        <input type="text" class="feature-input" placeholder="e.g., ASA 3.0 Safety">
+                                    </div>
+                                    <div class="feature-input-group">
+                                        <input type="text" class="feature-input" placeholder="e.g., Best Seller Model">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-secondary" onclick="addFeatureInput()">+ Add Feature</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">➕ Add Car Model</button>
+                </form>
+
+                <!-- Existing Car Models -->
+                <div class="car-models-list">
+                    <h3 style="color: #333; margin-bottom: 15px;">📋 Existing Car Models</h3>
+                    <div id="carModelsList">
+                        <div class="car-model-item">
+                            <h4>Myvi</h4>
+                            <p><strong>Price:</strong> RM 46,500</p>
+                            <p><strong>Features:</strong> 1.3L & 1.5L Engine, ASA 3.0 Safety, Best Seller Model</p>
+                            <button class="btn btn-remove" style="margin-top: 10px;" onclick="removeCarModel(this)">🗑️ Remove</button>
+                        </div>
+                        <div class="car-model-item">
+                            <h4>Ativa</h4>
+                            <p><strong>Price:</strong> RM 66,700</p>
+                            <p><strong>Features:</strong> Premium SUV, 1.0L Turbo, 5-Star Safety</p>
+                            <button class="btn btn-remove" style="margin-top: 10px;" onclick="removeCarModel(this)">🗑️ Remove</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Preview image function
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            const img = preview.querySelector('img');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Add feature input
+        function addFeatureInput() {
+            const container = document.getElementById('featuresContainer');
+            const featureCount = container.querySelectorAll('.feature-input-group').length;
+            
+            if (featureCount < 5) {
+                const div = document.createElement('div');
+                div.className = 'feature-input-group';
+                div.innerHTML = '<input type="text" class="feature-input" placeholder="Enter feature">';
+                container.appendChild(div);
+            } else {
+                alert('Maximum 5 features allowed');
+            }
+        }
+
+        // Show success message
+        function showSuccessMessage() {
+            const message = document.getElementById('successMessage');
+            message.style.display = 'block';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 3000);
+        }
+
+        // Banner form submission
+        document.getElementById('bannerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const data = {
+                title: document.getElementById('bannerTitle').value,
+                subtitle: document.getElementById('bannerSubtitle').value,
+                badge: document.getElementById('collectionBadge').value
+            };
+            console.log('Banner Data:', data);
+            localStorage.setItem('bannerData', JSON.stringify(data));
+            showSuccessMessage();
+        });
+
+        // Personal info form submission
+        document.getElementById('personalInfoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('consultantName').value,
+                title: document.getElementById('consultantTitle').value,
+                image: document.querySelector('#profilePreview img').src || ''
+            };
+            console.log('Personal Info:', data);
+            localStorage.setItem('personalInfo', JSON.stringify(data));
+            showSuccessMessage();
+        });
+
+        // Statistics form submission
+        document.getElementById('statsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const data = {
+                customers: document.getElementById('happyCustomers').value,
+                experience: document.getElementById('yearsExperience').value,
+                satisfaction: document.getElementById('satisfaction').value
+            };
+            console.log('Statistics:', data);
+            localStorage.setItem('statistics', JSON.stringify(data));
+            showSuccessMessage();
+        });
+
+        // Services form submission
+        document.getElementById('servicesForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const services = [];
+            for (let i = 1; i <= 6; i++) {
+                const service = document.getElementById('service' + i).value;
+                if (service) services.push(service);
+            }
+            console.log('Services:', services);
+            localStorage.setItem('services', JSON.stringify(services));
+            showSuccessMessage();
+        });
+
+        // Car model form submission
+        document.getElementById('carModelForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const carName = document.getElementById('carName').value;
+            const carPrice = document.getElementById('carPrice').value;
+            const carImageSrc = document.querySelector('#carImagePreview img').src || '';
+            
+            const features = [];
+            document.querySelectorAll('.feature-input').forEach(input => {
+                if (input.value.trim()) {
+                    features.push(input.value.trim());
+                }
+            });
+
+            const carModel = {
+                name: carName,
+                price: carPrice,
+                features: features,
+                image: carImageSrc
+            };
+
+            // Get existing car models from localStorage
+            let carModels = JSON.parse(localStorage.getItem('carModels') || '[]');
+            carModels.push(carModel);
+            localStorage.setItem('carModels', JSON.stringify(carModels));
+
+            // Add to display list
+            addCarModelToList(carModel);
+
+            // Reset form
+            this.reset();
+            document.getElementById('carImagePreview').style.display = 'none';
+            
+            // Reset features to 3 inputs
+            const container = document.getElementById('featuresContainer');
+            container.innerHTML = `
+                <div class="feature-input-group">
+                    <input type="text" class="feature-input" placeholder="e.g., 1.3L & 1.5L Engine">
+                </div>
+                <div class="feature-input-group">
+                    <input type="text" class="feature-input" placeholder="e.g., ASA 3.0 Safety">
+                </div>
+                <div class="feature-input-group">
+                    <input type="text" class="feature-input" placeholder="e.g., Best Seller Model">
+                </div>
+            `;
+
+            showSuccessMessage();
+            console.log('Car Model Added:', carModel);
+        });
+
+        // Add car model to list
+        function addCarModelToList(carModel) {
+            const list = document.getElementById('carModelsList');
+            const div = document.createElement('div');
+            div.className = 'car-model-item';
+            div.innerHTML = `
+                <h4>${carModel.name}</h4>
+                <p><strong>Price:</strong> ${carModel.price}</p>
+                <p><strong>Features:</strong> ${carModel.features.join(', ')}</p>
+                <button class="btn btn-remove" style="margin-top: 10px;" onclick="removeCarModel(this)">🗑️ Remove</button>
+            `;
+            list.appendChild(div);
+        }
+
+        // Remove car model
+        function removeCarModel(button) {
+            if (confirm('Are you sure you want to remove this car model?')) {
+                const item = button.parentElement;
+                const carName = item.querySelector('h4').textContent;
+                
+                // Remove from localStorage
+                let carModels = JSON.parse(localStorage.getItem('carModels') || '[]');
+                carModels = carModels.filter(car => car.name !== carName);
+                localStorage.setItem('carModels', JSON.stringify(carModels));
+                
+                item.remove();
+                showSuccessMessage();
+            }
+        }
+
+        // Load saved data on page load
+        window.addEventListener('load', function() {
+            // Load banner data
+            const bannerData = JSON.parse(localStorage.getItem('bannerData') || '{}');
+            if (bannerData.title) document.getElementById('bannerTitle').value = bannerData.title;
+            if (bannerData.subtitle) document.getElementById('bannerSubtitle').value = bannerData.subtitle;
+            if (bannerData.badge) document.getElementById('collectionBadge').value = bannerData.badge;
+
+            // Load personal info
+            const personalInfo = JSON.parse(localStorage.getItem('personalInfo') || '{}');
+            if (personalInfo.name) document.getElementById('consultantName').value = personalInfo.name;
+            if (personalInfo.title) document.getElementById('consultantTitle').value = personalInfo.title;
+
+            // Load statistics
+            const stats = JSON.parse(localStorage.getItem('statistics') || '{}');
+            if (stats.customers) document.getElementById('happyCustomers').value = stats.customers;
+            if (stats.experience) document.getElementById('yearsExperience').value = stats.experience;
+            if (stats.satisfaction) document.getElementById('satisfaction').value = stats.satisfaction;
+
+            // Load services
+            const services = JSON.parse(localStorage.getItem('services') || '[]');
+            services.forEach((service, index) => {
+                const input = document.getElementById('service' + (index + 1));
+                if (input) input.value = service;
+            });
+        });
+    </script>
+</body>
+</html>
+

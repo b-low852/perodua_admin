@@ -741,7 +741,7 @@
         <!-- Car Models Section -->
         <div id="cars" class="content-section">
             <div class="card">
-                <h3>Add New Car Model</h3>
+                <h3 id="carModelFormTitle">Add New Car Model</h3>
                 <form id="carModelForm">
                     <div class="dashboard-grid">
                         <div>
@@ -779,7 +779,10 @@
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn">➕ Add Car Model</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn" id="carModelSubmitBtn">➕ Add Car Model</button>
+                        <button type="button" class="btn btn-secondary" id="carModelCancelBtn" onclick="resetCarModelForm()" style="display: none;">Cancel</button>
+                    </div>
                 </form>
             </div>
 
@@ -1272,7 +1275,14 @@
             
             const carName = document.getElementById('carName').value;
             const carPrice = document.getElementById('carPrice').value;
-            const carImageSrc = document.querySelector('#carImagePreview img').src || '';
+            const carImageInput = document.getElementById('carImage');
+            const carImagePreview = document.querySelector('#carImagePreview img');
+            
+            // Use preview image if available (either new upload or existing image)
+            let carImageSrc = '';
+            if (carImagePreview && carImagePreview.src) {
+                carImageSrc = carImagePreview.src;
+            }
             
             const features = [];
             document.querySelectorAll('.feature-input').forEach(input => {
@@ -1287,37 +1297,138 @@
                     price: carPrice,
                     features: features,
                     image: carImageSrc, // Store base64 directly
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                await db.collection('cars').add(carModel);
+                if (editingCarModelId) {
+                    // Update existing car model
+                    await db.collection('cars').doc(editingCarModelId).update(carModel);
+                    showSuccessMessage('Car model updated successfully!');
+                    console.log('Car Model Updated in Firestore:', carModel);
+                } else {
+                    // Add new car model
+                    carModel.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('cars').add(carModel);
+                    showSuccessMessage('Car model added successfully!');
+                    console.log('Car Model Added to Firestore:', carModel);
+                }
                 
-                // Reset form
-                this.reset();
-                document.getElementById('carImagePreview').style.display = 'none';
-                
-                // Reset features to 3 inputs
-                const container = document.getElementById('featuresContainer');
-                container.innerHTML = `
-                    <div class="feature-input-group">
-                        <input type="text" class="feature-input" placeholder="e.g., 1.3L & 1.5L Engine">
-                    </div>
-                    <div class="feature-input-group">
-                        <input type="text" class="feature-input" placeholder="e.g., ASA 3.0 Safety">
-                    </div>
-                    <div class="feature-input-group">
-                        <input type="text" class="feature-input" placeholder="e.g., Best Seller Model">
-                    </div>
-                `;
-
-                showSuccessMessage('Car model added successfully!');
+                // Reset form after successful save
+                resetCarModelForm();
                 updateDashboard();
-                console.log('Car Model Added to Firestore:', carModel);
             } catch (error) {
-                console.error('Error adding car model:', error);
-                showErrorMessage('Failed to add car model: ' + error.message);
+                console.error('Error saving car model:', error);
+                showErrorMessage('Failed to save car model: ' + error.message);
             }
         });
+
+        // Reset car model form
+        function resetCarModelForm() {
+            document.getElementById('carModelForm').reset();
+            document.getElementById('carImagePreview').style.display = 'none';
+            editingCarModelId = null;
+            
+            // Update button text and title
+            const submitButton = document.getElementById('carModelSubmitBtn');
+            const cancelButton = document.getElementById('carModelCancelBtn');
+            const formTitle = document.getElementById('carModelFormTitle');
+            
+            submitButton.textContent = '➕ Add Car Model';
+            formTitle.textContent = 'Add New Car Model';
+            cancelButton.style.display = 'none';
+            
+            // Reset file input
+            document.getElementById('carImage').value = '';
+            
+            // Reset features to 3 inputs
+            const container = document.getElementById('featuresContainer');
+            container.innerHTML = `
+                <div class="feature-input-group">
+                    <input type="text" class="feature-input" placeholder="e.g., 1.3L & 1.5L Engine">
+                </div>
+                <div class="feature-input-group">
+                    <input type="text" class="feature-input" placeholder="e.g., ASA 3.0 Safety">
+                </div>
+                <div class="feature-input-group">
+                    <input type="text" class="feature-input" placeholder="e.g., Best Seller Model">
+                </div>
+            `;
+        }
+
+        // Edit car model
+        async function editCarModel(button, docId) {
+            if (!docId) {
+                showErrorMessage('Cannot edit: Document ID not found');
+                return;
+            }
+
+            if (!firebaseInitialized) {
+                showErrorMessage('Please connect to Firebase first!');
+                return;
+            }
+
+            try {
+                // Get car model data from Firestore
+                const doc = await db.collection('cars').doc(docId).get();
+                if (!doc.exists) {
+                    showErrorMessage('Car model not found');
+                    return;
+                }
+
+                const carModel = doc.data();
+                editingCarModelId = docId;
+
+                // Populate form fields
+                document.getElementById('carName').value = carModel.name || '';
+                document.getElementById('carPrice').value = carModel.price || '';
+
+                // Populate features
+                const container = document.getElementById('featuresContainer');
+                container.innerHTML = '';
+                if (carModel.features && carModel.features.length > 0) {
+                    carModel.features.forEach(feature => {
+                        const div = document.createElement('div');
+                        div.className = 'feature-input-group';
+                        div.innerHTML = `<input type="text" class="feature-input" placeholder="Enter feature" value="${feature}">`;
+                        container.appendChild(div);
+                    });
+                } else {
+                    // Add 3 empty feature inputs
+                    for (let i = 0; i < 3; i++) {
+                        const div = document.createElement('div');
+                        div.className = 'feature-input-group';
+                        div.innerHTML = `<input type="text" class="feature-input" placeholder="Enter feature">`;
+                        container.appendChild(div);
+                    }
+                }
+
+                // Show existing image if available
+                if (carModel.image) {
+                    const preview = document.getElementById('carImagePreview');
+                    const img = preview.querySelector('img');
+                    img.src = carModel.image;
+                    preview.style.display = 'block';
+                } else {
+                    document.getElementById('carImagePreview').style.display = 'none';
+                }
+
+                // Update button text, title, and show cancel button
+                const submitButton = document.getElementById('carModelSubmitBtn');
+                const cancelButton = document.getElementById('carModelCancelBtn');
+                const formTitle = document.getElementById('carModelFormTitle');
+                
+                submitButton.textContent = '💾 Update Car Model';
+                formTitle.textContent = 'Edit Car Model';
+                cancelButton.style.display = 'inline-block';
+
+                // Scroll to form
+                document.getElementById('carModelForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                showSuccessMessage('Car model loaded for editing');
+            } catch (error) {
+                console.error('Error loading car model for editing:', error);
+                showErrorMessage('Failed to load car model: ' + error.message);
+            }
+        }
 
         // Add car model to list
         function addCarModelToList(carModel, docId = null) {
@@ -1332,13 +1443,17 @@
                 <p><strong>Price:</strong> ${carModel.price}</p>
                 <p><strong>Features:</strong> ${carModel.features ? carModel.features.join(', ') : 'No features'}</p>
                 ${carModel.image ? `<img src="${carModel.image}" alt="${carModel.name}">` : ''}
-                <button class="btn btn-remove" style="margin-top: 10px;" onclick="removeCarModel(this)">🗑️ Remove</button>
+                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="editCarModel(this, '${docId || ''}')">✏️ Edit</button>
+                    <button class="btn btn-remove" onclick="removeCarModel(this)">🗑️ Remove</button>
+                </div>
             `;
             list.appendChild(div);
         }
 
         // Real-time listener for car models
         let carModelsUnsubscribe = null;
+        let editingCarModelId = null; // Track which car model is being edited
 
         // Load car models from Firestore with real-time updates
         function loadCarModelsFromFirestore() {

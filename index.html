@@ -451,6 +451,127 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
+        /* Custom Modal Styles */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s;
+        }
+
+        .custom-modal-overlay.show {
+            display: flex;
+        }
+
+        .custom-modal {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s;
+            overflow: hidden;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .custom-modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .custom-modal-header.warning {
+            background: #fff3cd;
+            border-bottom-color: #ffc107;
+        }
+
+        .custom-modal-header.success {
+            background: #e8f5e9;
+            border-bottom-color: #4caf50;
+        }
+
+        .custom-modal-header.error {
+            background: #ffebee;
+            border-bottom-color: #f44336;
+        }
+
+        .custom-modal-icon {
+            font-size: 28px;
+        }
+
+        .custom-modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .custom-modal-body {
+            padding: 25px;
+            color: #666;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .custom-modal-footer {
+            padding: 15px 25px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .custom-modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .custom-modal-btn-cancel {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .custom-modal-btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .custom-modal-btn-confirm {
+            background: #ff1744;
+            color: white;
+        }
+
+        .custom-modal-btn-confirm:hover {
+            background: #d50032;
+        }
+
+        .custom-modal-btn-ok {
+            background: #ff1744;
+            color: white;
+        }
+
+        .custom-modal-btn-ok:hover {
+            background: #d50032;
+        }
+
         .config-warning {
             background: #fff3cd;
             border: 2px solid #ffc107;
@@ -496,6 +617,33 @@
         }
 
         @media (max-width: 768px) {
+            .custom-modal {
+                max-width: 95%;
+                margin: 20px;
+            }
+
+            .custom-modal-header {
+                padding: 15px 20px;
+            }
+
+            .custom-modal-title {
+                font-size: 18px;
+            }
+
+            .custom-modal-body {
+                padding: 20px;
+                font-size: 14px;
+            }
+
+            .custom-modal-footer {
+                padding: 12px 20px;
+                flex-direction: column;
+            }
+
+            .custom-modal-btn {
+                width: 100%;
+            }
+
             body {
                 padding: 0;
             }
@@ -684,6 +832,23 @@
         <!-- Messages -->
         <div id="successMessage" class="success-message"></div>
         <div id="errorMessage" class="error-message"></div>
+
+        <!-- Custom Modal Overlay -->
+        <div id="customModalOverlay" class="custom-modal-overlay">
+            <div class="custom-modal">
+                <div class="custom-modal-header" id="customModalHeader">
+                    <span class="custom-modal-icon" id="customModalIcon">⚠️</span>
+                    <h3 class="custom-modal-title" id="customModalTitle">Confirm Action</h3>
+                </div>
+                <div class="custom-modal-body" id="customModalBody">
+                    Are you sure you want to proceed?
+                </div>
+                <div class="custom-modal-footer" id="customModalFooter">
+                    <button class="custom-modal-btn custom-modal-btn-cancel" id="customModalCancel">Cancel</button>
+                    <button class="custom-modal-btn custom-modal-btn-confirm" id="customModalConfirm">Confirm</button>
+                </div>
+            </div>
+        </div>
 
         <!-- Dashboard Section -->
         <div id="dashboard" class="content-section active">
@@ -1076,6 +1241,109 @@
             }, 5000);
         }
 
+        // Custom Confirm Modal
+        function showCustomConfirm(message, title = 'Confirm Action', icon = '⚠️') {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('customModalOverlay');
+                const modalHeader = document.getElementById('customModalHeader');
+                const modalIcon = document.getElementById('customModalIcon');
+                const modalTitle = document.getElementById('customModalTitle');
+                const modalBody = document.getElementById('customModalBody');
+                const modalFooter = document.getElementById('customModalFooter');
+                const cancelBtn = document.getElementById('customModalCancel');
+                const confirmBtn = document.getElementById('customModalConfirm');
+
+                // Set content
+                modalIcon.textContent = icon;
+                modalTitle.textContent = title;
+                modalBody.innerHTML = message.replace(/\n/g, '<br>');
+                modalHeader.className = 'custom-modal-header warning';
+
+                // Show modal
+                overlay.classList.add('show');
+
+                // Handle cancel
+                const handleCancel = () => {
+                    overlay.classList.remove('show');
+                    cancelBtn.removeEventListener('click', handleCancel);
+                    confirmBtn.removeEventListener('click', handleConfirm);
+                    overlay.removeEventListener('click', handleOverlayClick);
+                    resolve(false);
+                };
+
+                // Handle confirm
+                const handleConfirm = () => {
+                    overlay.classList.remove('show');
+                    cancelBtn.removeEventListener('click', handleCancel);
+                    confirmBtn.removeEventListener('click', handleConfirm);
+                    overlay.removeEventListener('click', handleOverlayClick);
+                    resolve(true);
+                };
+
+                // Handle overlay click (close on outside click)
+                const handleOverlayClick = (e) => {
+                    if (e.target === overlay) {
+                        handleCancel();
+                    }
+                };
+
+                cancelBtn.addEventListener('click', handleCancel);
+                confirmBtn.addEventListener('click', handleConfirm);
+                overlay.addEventListener('click', handleOverlayClick);
+            });
+        }
+
+        // Custom Alert Modal
+        function showCustomAlert(message, title = 'Alert', icon = 'ℹ️', type = 'info') {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('customModalOverlay');
+                const modalHeader = document.getElementById('customModalHeader');
+                const modalIcon = document.getElementById('customModalIcon');
+                const modalTitle = document.getElementById('customModalTitle');
+                const modalBody = document.getElementById('customModalBody');
+                const modalFooter = document.getElementById('customModalFooter');
+                const cancelBtn = document.getElementById('customModalCancel');
+                const confirmBtn = document.getElementById('customModalConfirm');
+
+                // Set content
+                modalIcon.textContent = icon;
+                modalTitle.textContent = title;
+                modalBody.innerHTML = message.replace(/\n/g, '<br>');
+                
+                // Set header style based on type
+                modalHeader.className = `custom-modal-header ${type}`;
+                
+                // Hide cancel button, show only OK button
+                cancelBtn.style.display = 'none';
+                confirmBtn.textContent = 'OK';
+                confirmBtn.className = 'custom-modal-btn custom-modal-btn-ok';
+
+                // Show modal
+                overlay.classList.add('show');
+
+                // Handle OK
+                const handleOK = () => {
+                    overlay.classList.remove('show');
+                    confirmBtn.removeEventListener('click', handleOK);
+                    overlay.removeEventListener('click', handleOverlayClick);
+                    cancelBtn.style.display = 'block';
+                    confirmBtn.textContent = 'Confirm';
+                    confirmBtn.className = 'custom-modal-btn custom-modal-btn-confirm';
+                    resolve(true);
+                };
+
+                // Handle overlay click
+                const handleOverlayClick = (e) => {
+                    if (e.target === overlay) {
+                        handleOK();
+                    }
+                };
+
+                confirmBtn.addEventListener('click', handleOK);
+                overlay.addEventListener('click', handleOverlayClick);
+            });
+        }
+
         // Preview image function with file size validation
         function previewImage(input, previewId) {
             const preview = document.getElementById(previewId);
@@ -1123,7 +1391,7 @@
                 div.innerHTML = '<input type="text" class="feature-input" placeholder="Enter feature">';
                 container.appendChild(div);
             } else {
-                alert('Maximum 5 features allowed');
+                showCustomAlert('You can add a maximum of 5 features per car model.', 'Maximum Features Reached', 'ℹ️', 'info');
             }
         }
 
@@ -1148,7 +1416,7 @@
                 if (firebaseInitialized) {
                     await db.collection('admin').doc('banner').set(data, { merge: true });
                     console.log('Banner Data saved to Firestore:', data);
-                    showSuccessMessage('Banner settings saved successfully!');
+                    showSuccessMessage('✅ Banner settings saved successfully!');
                 } else {
                     showErrorMessage('Firebase not connected. Please connect to Firebase first.');
                 }
@@ -1212,7 +1480,7 @@
                 if (firebaseInitialized) {
                     await db.collection('admin').doc('personalInfo').set(data, { merge: true });
                     console.log('Personal Info saved to Firestore:', data);
-                    showSuccessMessage('Personal information saved successfully!');
+                    showSuccessMessage('✅ Personal information saved successfully!');
                 } else {
                     showErrorMessage('Firebase not connected. Please connect to Firebase first.');
                 }
@@ -1338,7 +1606,7 @@
                 };
                 
                 await db.collection('gallery').add(galleryItem);
-                showSuccessMessage('Images uploaded successfully!');
+                showSuccessMessage(`✅ ${images.length} image(s) uploaded successfully!`);
                 
                 resetGalleryForm();
                 updateDashboard();
@@ -1407,10 +1675,12 @@
                     div.setAttribute('data-gallery-id', docId);
                     div.setAttribute('data-image-index', idx);
                     
+                    // Escape the image source for onclick
+                    const escapedImg = img.replace(/'/g, "\\'");
                     div.innerHTML = `
-                        <img src="${img}" alt="Gallery Image" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; cursor: pointer;" onclick="viewFullImage('${img}')">
+                        <img src="${img}" alt="Gallery Image" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; cursor: pointer;" onclick="viewFullImage('${escapedImg}')">
                         <div style="margin-top: 10px; display: flex; gap: 10px;">
-                            <button class="btn btn-remove" onclick="removeGalleryImage('${docId}', ${idx})" style="flex: 1;">🗑️ Remove</button>
+                            <button class="btn btn-remove" onclick="event.stopPropagation(); removeGalleryImage('${docId}', ${idx})" style="flex: 1;">🗑️ Remove</button>
                         </div>
                     `;
                     list.appendChild(div);
@@ -1435,8 +1705,15 @@
         }
         
         // Remove single image from gallery
-        async function removeGalleryImage(docId, imageIndex) {
-            if (!confirm('Are you sure you want to remove this image?')) {
+        window.removeGalleryImage = async function(docId, imageIndex) {
+            // Show custom confirmation dialog
+            const confirmed = await showCustomConfirm(
+                'Are you sure you want to delete this image?<br><br><strong>This action cannot be undone.</strong>',
+                'Delete Image',
+                '🗑️'
+            );
+            
+            if (!confirmed) {
                 return;
             }
 
@@ -1447,12 +1724,13 @@
 
             try {
                 const doc = await db.collection('gallery').doc(docId).get();
-                if (!doc.exists) {
+                const item = doc.data();
+                
+                if (!item) {
                     showErrorMessage('Gallery item not found');
                     return;
                 }
 
-                const item = doc.data();
                 const images = item.images || [];
                 
                 // Remove the image at the specified index
@@ -1461,15 +1739,15 @@
                 if (images.length === 0) {
                     // If no images left, delete the entire document
                     await db.collection('gallery').doc(docId).delete();
-                    showSuccessMessage('Image removed successfully!');
+                    showSuccessMessage('✅ Image deleted successfully!');
                 } else {
                     // Update with remaining images
                     await db.collection('gallery').doc(docId).update({ images: images });
-                    showSuccessMessage('Image removed successfully!');
+                    showSuccessMessage('✅ Image deleted successfully!');
                 }
             } catch (error) {
                 console.error('Error removing image:', error);
-                showErrorMessage('Failed to remove image: ' + error.message);
+                showErrorMessage('Failed to delete image: ' + error.message);
             }
         }
 
@@ -1513,13 +1791,13 @@
                 if (editingCarModelId) {
                     // Update existing car model
                     await db.collection('cars').doc(editingCarModelId).update(carModel);
-                    showSuccessMessage('Car model updated successfully!');
+                    showSuccessMessage(`✅ Car model "${carName}" updated successfully!`);
                     console.log('Car Model Updated in Firestore:', carModel);
                 } else {
                     // Add new car model
                     carModel.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                     await db.collection('cars').add(carModel);
-                    showSuccessMessage('Car model added successfully!');
+                    showSuccessMessage(`✅ Car model "${carName}" added successfully!`);
                     console.log('Car Model Added to Firestore:', carModel);
                 }
                 
@@ -1727,30 +2005,37 @@
 
         // Remove car model
         async function removeCarModel(button) {
-            if (!confirm('Are you sure you want to remove this car model?')) {
+            const item = button.parentElement;
+            const carName = item.querySelector('h4').textContent;
+            
+            const confirmed = await showCustomConfirm(
+                `Are you sure you want to delete "<strong>${carName}</strong>"?<br><br><strong>This action cannot be undone.</strong>`,
+                'Delete Car Model',
+                '🗑️'
+            );
+            
+            if (!confirmed) {
                 return;
             }
 
-            const item = button.parentElement;
             const docId = item.getAttribute('data-doc-id');
             
             if (firebaseInitialized && docId) {
                 try {
                     await db.collection('cars').doc(docId).delete();
                     item.remove();
-                    showSuccessMessage('Car model removed successfully!');
+                    showSuccessMessage(`✅ Car model "${carName}" deleted successfully!`);
                     updateDashboard();
                 } catch (error) {
                     console.error('Error removing car model:', error);
-                    showErrorMessage('Failed to remove car model: ' + error.message);
+                    showErrorMessage('Failed to delete car model: ' + error.message);
                 }
             } else {
-                const carName = item.querySelector('h4').textContent;
                 let carModels = JSON.parse(localStorage.getItem('carModels') || '[]');
                 carModels = carModels.filter(car => car.name !== carName);
                 localStorage.setItem('carModels', JSON.stringify(carModels));
                 item.remove();
-                showSuccessMessage('Car model removed!');
+                showSuccessMessage(`✅ Car model "${carName}" deleted successfully!`);
             }
         }
 
@@ -1898,7 +2183,7 @@
                     status: 'contacted',
                     contactedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                showSuccessMessage('Contact marked as contacted');
+                showSuccessMessage('✅ Contact marked as contacted successfully!');
             } catch (error) {
                 console.error('Error updating contact:', error);
                 showErrorMessage('Failed to update contact: ' + error.message);
@@ -1916,7 +2201,7 @@
                 await db.collection('contacts').doc(contactId).update({
                     status: 'new'
                 });
-                showSuccessMessage('Contact marked as new');
+                showSuccessMessage('✅ Contact marked as new successfully!');
             } catch (error) {
                 console.error('Error updating contact:', error);
                 showErrorMessage('Failed to update contact: ' + error.message);
@@ -1925,7 +2210,13 @@
 
         // Delete contact
         async function deleteContact(contactId) {
-            if (!confirm('Are you sure you want to delete this contact?')) {
+            const confirmed = await showCustomConfirm(
+                'Are you sure you want to delete this contact?<br><br><strong>This action cannot be undone.</strong>',
+                'Delete Contact',
+                '🗑️'
+            );
+            
+            if (!confirmed) {
                 return;
             }
 
@@ -1936,7 +2227,7 @@
 
             try {
                 await db.collection('contacts').doc(contactId).delete();
-                showSuccessMessage('Contact deleted successfully');
+                showSuccessMessage('✅ Contact deleted successfully!');
             } catch (error) {
                 console.error('Error deleting contact:', error);
                 showErrorMessage('Failed to delete contact: ' + error.message);

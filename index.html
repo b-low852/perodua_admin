@@ -666,8 +666,7 @@
             <li><a href="#" onclick="showSection('cars')"><span>🚙</span> Car Models</a></li>
             <li><a href="#" onclick="showSection('banner')"><span>📢</span> Banner Settings</a></li>
             <li><a href="#" onclick="showSection('personal')"><span>👤</span> Personal Info</a></li>
-            <li><a href="#" onclick="showSection('statistics')"><span>📈</span> Statistics</a></li>
-            <li><a href="#" onclick="showSection('services')"><span>🛠️</span> Services</a></li>
+            <li><a href="#" onclick="showSection('gallery')"><span>📸</span> Delivered Cars Gallery</a></li>
         </ul>
     </div>
 
@@ -706,7 +705,7 @@
             <div class="card">
                 <h3>Welcome to Perodua Admin Dashboard</h3>
                 <p style="color: #666; line-height: 1.6;">
-                    Use the sidebar menu to navigate between different sections. You can manage your banner, personal information, statistics, services, and car models all from this dashboard.
+                    Use the sidebar menu to navigate between different sections. You can manage your banner, personal information, and car models all from this dashboard.
                 </p>
                 <p style="color: #666; line-height: 1.6; margin-top: 15px;">
                     <strong>Quick Actions:</strong>
@@ -715,7 +714,6 @@
                     <li>Add car models from the "Car Models" section</li>
                     <li>Update your banner settings</li>
                     <li>Manage your personal information</li>
-                    <li>Edit statistics and services</li>
                 </ul>
             </div>
         </div>
@@ -803,11 +801,11 @@
                 <form id="bannerForm">
                     <div class="form-group">
                         <label for="bannerTitle">Banner Title</label>
-                        <input type="text" id="bannerTitle" placeholder="e.g., Drive Your Dream Perodua Today" value="Drive Your Dream Perodua Today">
+                        <input type="text" id="bannerTitle" placeholder="e.g., Drive Your Dream Perodua Today">
                     </div>
                     <div class="form-group">
                         <label for="bannerSubtitle">Banner Subtitle</label>
-                        <textarea id="bannerSubtitle" placeholder="Enter banner description">Experience excellence with Malaysia's #1 car brand. Premium quality, unbeatable prices, exceptional service.</textarea>
+                        <textarea id="bannerSubtitle" placeholder="Enter banner description"></textarea>
                     </div>
                     <button type="submit" class="btn">💾 Save Banner</button>
                 </form>
@@ -821,83 +819,46 @@
                 <form id="personalInfoForm">
                     <div class="form-group">
                         <label for="consultantName">Consultant Name</label>
-                        <input type="text" id="consultantName" placeholder="Enter name" value="Herwan">
+                        <input type="text" id="consultantName" placeholder="Enter name">
                     </div>
                     <div class="form-group">
                         <label for="consultantTitle">Title/Position</label>
-                        <input type="text" id="consultantTitle" placeholder="Enter title" value="Authorized Perodua Consultant">
+                        <input type="text" id="consultantTitle" placeholder="Enter title">
                     </div>
                     <div class="form-group">
                         <label for="profileImage">Profile Image</label>
-                        <input type="file" id="profileImage" accept="image/*" onchange="previewImage(this, 'profilePreview')">
-                        <div id="profilePreview" class="logo-preview" style="display:none;">
-                            <img src="" alt="Profile Preview">
-                        </div>
+                        <input type="file" id="profileImage" accept="image/*">
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">Or enter image URL:</p>
+                        <input type="text" id="profileImageUrl" placeholder="https://example.com/image.jpg" style="margin-top: 5px;">
                     </div>
                     <button type="submit" class="btn">💾 Save Personal Info</button>
                 </form>
             </div>
         </div>
 
-        <!-- Statistics Section -->
-        <div id="statistics" class="content-section">
+        <!-- Delivered Cars Gallery Section -->
+        <div id="gallery" class="content-section">
             <div class="card">
-                <h3>Statistics</h3>
-                <form id="statsForm">
-                    <div class="stats-grid">
-                        <div class="form-group">
-                            <label for="happyCustomers">Happy Customers</label>
-                            <input type="text" id="happyCustomers" placeholder="500+" value="500+">
-                        </div>
-                        <div class="form-group">
-                            <label for="yearsExperience">Years Experience</label>
-                            <input type="text" id="yearsExperience" placeholder="5+" value="5+">
-                        </div>
-                        <div class="form-group">
-                            <label for="satisfaction">Satisfaction Rate</label>
-                            <input type="text" id="satisfaction" placeholder="100%" value="100%">
-                        </div>
+                <h3 id="galleryFormTitle">Upload Delivered Car Images</h3>
+                <form id="galleryForm">
+                    <div class="form-group">
+                        <label for="galleryImages">Car Images (Multiple)</label>
+                        <input type="file" id="galleryImages" accept="image/*" multiple>
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">You can select multiple images at once</p>
+                        <div id="galleryImagePreviews" style="margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;"></div>
                     </div>
-                    <button type="submit" class="btn">💾 Save Statistics</button>
+                    <button type="submit" class="btn" id="gallerySubmitBtn">➕ Upload Images</button>
                 </form>
+            </div>
+
+            <div class="card">
+                <h3>Delivered Cars Gallery</h3>
+                <div id="galleryList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+                    <p style="color: #666; padding: 20px; text-align: center; grid-column: 1 / -1;">Loading gallery from Firebase...</p>
+                </div>
             </div>
         </div>
 
-        <!-- Services Section -->
-        <div id="services" class="content-section">
-            <div class="card">
-                <h3>Services & Features</h3>
-                <form id="servicesForm">
-                    <div class="services-grid">
-                        <div class="form-group">
-                            <label for="service1">Service 1</label>
-                            <input type="text" id="service1" placeholder="Enter service" value="Best Price Guarantee">
-                        </div>
-                        <div class="form-group">
-                            <label for="service2">Service 2</label>
-                            <input type="text" id="service2" placeholder="Enter service" value="Trade-In Welcome">
-                        </div>
-                        <div class="form-group">
-                            <label for="service3">Service 3</label>
-                            <input type="text" id="service3" placeholder="Enter service" value="Easy Loan Approval">
-                        </div>
-                        <div class="form-group">
-                            <label for="service4">Service 4</label>
-                            <input type="text" id="service4" placeholder="Enter service" value="Free Test Drive">
-                        </div>
-                        <div class="form-group">
-                            <label for="service5">Service 5</label>
-                            <input type="text" id="service5" placeholder="Enter service" value="24/7 Support">
-                        </div>
-                        <div class="form-group">
-                            <label for="service6">Service 6</label>
-                            <input type="text" id="service6" placeholder="Enter service" value="Special Promotions">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn">💾 Save Services</button>
-                </form>
-            </div>
-        </div>
 
     </div>
 
@@ -959,10 +920,28 @@
                 'cars': 'Car Models',
                 'banner': 'Banner Settings',
                 'personal': 'Personal Information',
-                'statistics': 'Statistics',
-                'services': 'Services & Features'
+                'gallery': 'Delivered Cars Gallery'
             };
             document.getElementById('pageTitle').textContent = titles[sectionId];
+
+            // Reload data when navigating to specific sections (always reload from Firestore if connected)
+            if (sectionId === 'banner') {
+                if (firebaseInitialized) {
+                    loadBannerData();
+                } else {
+                    loadBannerFromLocalStorage();
+                }
+            } else if (sectionId === 'personal') {
+                if (firebaseInitialized) {
+                    loadPersonalInfoData();
+                } else {
+                    loadPersonalInfoFromLocalStorage();
+                }
+            } else if (sectionId === 'gallery') {
+                if (firebaseInitialized) {
+                    loadGalleryFromFirestore();
+                }
+            }
 
             // Close mobile menu on mobile devices
             if (window.innerWidth <= 768) {
@@ -983,10 +962,24 @@
                 updateFirebaseStatus(true);
                 showSuccessMessage('Firebase connected successfully!');
                 
-                // Load all data from Firestore
+                // Load all data from Firestore (this will overwrite any localStorage data)
                 loadCarModelsFromFirestore();
                 loadContactsFromFirestore();
-                loadAdminDataFromFirestore();
+                loadGalleryFromFirestore();
+                loadAdminDataFromFirestore().then(() => {
+                    // After loading from Firestore, refresh the current section if it's an admin section
+                    const activeSection = document.querySelector('.content-section.active');
+                    if (activeSection) {
+                        const sectionId = activeSection.id;
+                        if (sectionId === 'banner' && firebaseInitialized) {
+                            loadBannerData();
+                        } else if (sectionId === 'personal' && firebaseInitialized) {
+                            loadPersonalInfoData();
+                        } else if (sectionId === 'gallery' && firebaseInitialized) {
+                            loadGalleryFromFirestore();
+                        }
+                    }
+                });
                 updateDashboard();
                 
                 return true;
@@ -1137,27 +1130,38 @@
         // Banner form submission
         document.getElementById('bannerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            const title = document.getElementById('bannerTitle').value.trim();
+            const subtitle = document.getElementById('bannerSubtitle').value.trim();
+            
+            if (!title && !subtitle) {
+                showErrorMessage('Please enter at least a title or subtitle');
+                return;
+            }
+            
             const data = {
-                title: document.getElementById('bannerTitle').value,
-                subtitle: document.getElementById('bannerSubtitle').value,
+                title: title,
+                subtitle: subtitle,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
             try {
                 if (firebaseInitialized) {
                     await db.collection('admin').doc('banner').set(data, { merge: true });
+                    console.log('Banner Data saved to Firestore:', data);
+                    showSuccessMessage('Banner settings saved successfully!');
+                } else {
+                    showErrorMessage('Firebase not connected. Please connect to Firebase first.');
                 }
                 
-                localStorage.setItem('bannerData', JSON.stringify(data));
-                
-                console.log('Banner Data saved:', data);
-                showSuccessMessage('Banner settings saved successfully!');
+                // Also save to localStorage as backup
+                localStorage.setItem('bannerData', JSON.stringify({ title: title, subtitle: subtitle }));
                 updateDashboard();
             } catch (error) {
                 console.error('Error saving banner:', error);
                 showErrorMessage('Failed to save banner: ' + error.message);
                 
-                localStorage.setItem('bannerData', JSON.stringify(data));
+                // Save to localStorage as fallback
+                localStorage.setItem('bannerData', JSON.stringify({ title: title, subtitle: subtitle }));
                 showSuccessMessage('Banner saved to local storage only');
             }
         });
@@ -1166,103 +1170,310 @@
         document.getElementById('personalInfoForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const consultantName = document.getElementById('consultantName').value;
-            const consultantTitle = document.getElementById('consultantTitle').value;
-            const profileImageSrc = document.querySelector('#profilePreview img').src || '';
+            const consultantName = document.getElementById('consultantName').value.trim();
+            const consultantTitle = document.getElementById('consultantTitle').value.trim();
+            const profileImageInput = document.getElementById('profileImage');
+            const profileImageUrl = document.getElementById('profileImageUrl').value.trim();
+            
+            // Determine which image source to use
+            let profileImageSrc = '';
+            
+            if (profileImageInput.files && profileImageInput.files[0]) {
+                // New file uploaded - convert to base64
+                const file = profileImageInput.files[0];
+                const reader = new FileReader();
+                
+                await new Promise((resolve, reject) => {
+                    reader.onload = function(e) {
+                        profileImageSrc = e.target.result;
+                        resolve();
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            } else if (profileImageUrl) {
+                // URL provided - use the URL
+                profileImageSrc = profileImageUrl;
+            }
+            
+            if (!consultantName && !consultantTitle) {
+                showErrorMessage('Please enter at least a name or title');
+                return;
+            }
             
             try {
                 const data = {
                     name: consultantName,
                     title: consultantTitle,
-                    image: profileImageSrc, // Store base64 directly
+                    image: profileImageSrc, // Can be URL or base64
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
                 if (firebaseInitialized) {
                     await db.collection('admin').doc('personalInfo').set(data, { merge: true });
+                    console.log('Personal Info saved to Firestore:', data);
+                    showSuccessMessage('Personal information saved successfully!');
+                } else {
+                    showErrorMessage('Firebase not connected. Please connect to Firebase first.');
                 }
                 
-                localStorage.setItem('personalInfo', JSON.stringify(data));
-                
-                console.log('Personal Info saved:', data);
-                showSuccessMessage('Personal information saved successfully!');
+                // Also save to localStorage as backup
+                localStorage.setItem('personalInfo', JSON.stringify({ 
+                    name: consultantName, 
+                    title: consultantTitle, 
+                    image: profileImageSrc 
+                }));
                 updateDashboard();
             } catch (error) {
                 console.error('Error saving personal info:', error);
                 showErrorMessage('Failed to save personal info: ' + error.message);
                 
-                const data = {
-                    name: consultantName,
-                    title: consultantTitle,
-                    image: profileImageSrc
-                };
-                localStorage.setItem('personalInfo', JSON.stringify(data));
+                // Save to localStorage as fallback
+                localStorage.setItem('personalInfo', JSON.stringify({ 
+                    name: consultantName, 
+                    title: consultantTitle, 
+                    image: profileImageSrc 
+                }));
                 showSuccessMessage('Personal info saved to local storage only');
             }
         });
 
-        // Statistics form submission
-        document.getElementById('statsForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const data = {
-                customers: document.getElementById('happyCustomers').value,
-                experience: document.getElementById('yearsExperience').value,
-                satisfaction: document.getElementById('satisfaction').value,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
+        // Gallery variables
+        let galleryUnsubscribe = null;
 
-            try {
-                if (firebaseInitialized) {
-                    await db.collection('admin').doc('statistics').set(data, { merge: true });
-                }
-                
-                localStorage.setItem('statistics', JSON.stringify(data));
-                
-                console.log('Statistics saved:', data);
-                showSuccessMessage('Statistics saved successfully!');
-                updateDashboard();
-            } catch (error) {
-                console.error('Error saving statistics:', error);
-                showErrorMessage('Failed to save statistics: ' + error.message);
-                
-                localStorage.setItem('statistics', JSON.stringify(data));
-                showSuccessMessage('Statistics saved to local storage only');
+        // Preview multiple gallery images
+        document.getElementById('galleryImages').addEventListener('change', function(e) {
+            const previewsContainer = document.getElementById('galleryImagePreviews');
+            previewsContainer.innerHTML = '';
+            
+            if (e.target.files && e.target.files.length > 0) {
+                Array.from(e.target.files).forEach((file, index) => {
+                    // Check file size (5MB limit)
+                    const maxSize = 5 * 1024 * 1024;
+                    if (file.size > maxSize) {
+                        showErrorMessage(`Image ${index + 1} is too large. Maximum size is 5MB.`);
+                        return;
+                    }
+                    
+                    if (!file.type.startsWith('image/')) {
+                        showErrorMessage(`File ${index + 1} is not a valid image.`);
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const div = document.createElement('div');
+                        div.style.position = 'relative';
+                        div.innerHTML = `
+                            <img src="${event.target.result}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #e0e0e0;">
+                            <button type="button" onclick="removeGalleryPreview(this)" style="position: absolute; top: 5px; right: 5px; background: #f44336; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px;">×</button>
+                        `;
+                        div.setAttribute('data-file-index', index);
+                        previewsContainer.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                });
             }
         });
 
-        // Services form submission
-        document.getElementById('servicesForm').addEventListener('submit', async function(e) {
+        // Remove gallery preview
+        function removeGalleryPreview(button) {
+            const previewDiv = button.parentElement;
+            const fileIndex = parseInt(previewDiv.getAttribute('data-file-index'));
+            const input = document.getElementById('galleryImages');
+            const dt = new DataTransfer();
+            
+            // Rebuild file list without the removed file
+            Array.from(input.files).forEach((file, index) => {
+                if (index !== fileIndex) {
+                    dt.items.add(file);
+                }
+            });
+            
+            input.files = dt.files;
+            previewDiv.remove();
+            
+            // Trigger change event to update previews
+            const event = new Event('change', { bubbles: true });
+            input.dispatchEvent(event);
+        }
+
+        // Gallery form submission
+        document.getElementById('galleryForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const services = [];
-            for (let i = 1; i <= 6; i++) {
-                const service = document.getElementById('service' + i).value;
-                if (service) services.push(service);
+            
+            if (!firebaseInitialized) {
+                showErrorMessage('Please connect to Firebase first!');
+                return;
             }
             
-            const data = {
-                services: services,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
+            const imageInput = document.getElementById('galleryImages');
+            
+            if (!imageInput.files || imageInput.files.length === 0) {
+                showErrorMessage('Please select at least one image');
+                return;
+            }
             
             try {
-                if (firebaseInitialized) {
-                    await db.collection('admin').doc('services').set(data, { merge: true });
+                // Convert all images to base64
+                const images = [];
+                for (let i = 0; i < imageInput.files.length; i++) {
+                    const file = imageInput.files[i];
+                    const reader = new FileReader();
+                    
+                    await new Promise((resolve, reject) => {
+                        reader.onload = function(e) {
+                            images.push(e.target.result);
+                            resolve();
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
                 }
                 
-                localStorage.setItem('services', JSON.stringify(services));
+                // Create new gallery item - each upload creates a new document
+                const galleryItem = {
+                    images: images,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
                 
-                console.log('Services saved:', services);
-                showSuccessMessage('Services saved successfully!');
+                await db.collection('gallery').add(galleryItem);
+                showSuccessMessage('Images uploaded successfully!');
+                
+                resetGalleryForm();
                 updateDashboard();
             } catch (error) {
-                console.error('Error saving services:', error);
-                showErrorMessage('Failed to save services: ' + error.message);
-                
-                localStorage.setItem('services', JSON.stringify(services));
-                showSuccessMessage('Services saved to local storage only');
+                console.error('Error saving gallery item:', error);
+                showErrorMessage('Failed to save images: ' + error.message);
             }
         });
+
+        // Reset gallery form
+        function resetGalleryForm() {
+            document.getElementById('galleryForm').reset();
+            document.getElementById('galleryImagePreviews').innerHTML = '';
+        }
+
+        // Load gallery from Firestore
+        function loadGalleryFromFirestore() {
+            if (!firebaseInitialized) {
+                const list = document.getElementById('galleryList');
+                list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center; grid-column: 1 / -1;">Connect to Firebase to view gallery</p>';
+                return;
+            }
+
+            try {
+                const list = document.getElementById('galleryList');
+                
+                if (galleryUnsubscribe) {
+                    galleryUnsubscribe();
+                }
+                
+                galleryUnsubscribe = db.collection('gallery')
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot((snapshot) => {
+                        list.innerHTML = '';
+                        
+                        if (snapshot.empty) {
+                            list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center; grid-column: 1 / -1;">No delivered cars in gallery yet. Add your first one above!</p>';
+                            return;
+                        }
+
+                        snapshot.forEach(doc => {
+                            const item = doc.data();
+                            addGalleryItemToList(item, doc.id);
+                        });
+                    }, (error) => {
+                        console.error('Error loading gallery:', error);
+                        showErrorMessage('Failed to load gallery: ' + error.message);
+                        list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center; grid-column: 1 / -1;">Error loading gallery</p>';
+                    });
+            } catch (error) {
+                console.error('Error setting up gallery listener:', error);
+                showErrorMessage('Failed to load gallery: ' + error.message);
+            }
+        }
+
+        // Add gallery item to list
+        function addGalleryItemToList(item, docId) {
+            const list = document.getElementById('galleryList');
+            
+            // Display each image individually in the gallery
+            if (item.images && item.images.length > 0) {
+                item.images.forEach((img, idx) => {
+                    const div = document.createElement('div');
+                    div.style.position = 'relative';
+                    div.className = 'car-model-item';
+                    div.setAttribute('data-gallery-id', docId);
+                    div.setAttribute('data-image-index', idx);
+                    
+                    div.innerHTML = `
+                        <img src="${img}" alt="Gallery Image" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; cursor: pointer;" onclick="viewFullImage('${img}')">
+                        <div style="margin-top: 10px; display: flex; gap: 10px;">
+                            <button class="btn btn-remove" onclick="removeGalleryImage('${docId}', ${idx})" style="flex: 1;">🗑️ Remove</button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+        }
+        
+        // View full image
+        function viewFullImage(imgSrc) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+            modal.innerHTML = `
+                <img src="${imgSrc}" style="max-width: 90%; max-height: 90%; object-fit: contain;">
+                <button onclick="this.parentElement.remove()" style="position: absolute; top: 20px; right: 20px; background: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 18px;">✕ Close</button>
+            `;
+            document.body.appendChild(modal);
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
+        }
+        
+        // Remove single image from gallery
+        async function removeGalleryImage(docId, imageIndex) {
+            if (!confirm('Are you sure you want to remove this image?')) {
+                return;
+            }
+
+            if (!firebaseInitialized) {
+                showErrorMessage('Firebase not connected');
+                return;
+            }
+
+            try {
+                const doc = await db.collection('gallery').doc(docId).get();
+                if (!doc.exists) {
+                    showErrorMessage('Gallery item not found');
+                    return;
+                }
+
+                const item = doc.data();
+                const images = item.images || [];
+                
+                // Remove the image at the specified index
+                images.splice(imageIndex, 1);
+                
+                if (images.length === 0) {
+                    // If no images left, delete the entire document
+                    await db.collection('gallery').doc(docId).delete();
+                    showSuccessMessage('Image removed successfully!');
+                } else {
+                    // Update with remaining images
+                    await db.collection('gallery').doc(docId).update({ images: images });
+                    showSuccessMessage('Image removed successfully!');
+                }
+            } catch (error) {
+                console.error('Error removing image:', error);
+                showErrorMessage('Failed to remove image: ' + error.message);
+            }
+        }
+
+
 
         // Car model form submission
         document.getElementById('carModelForm').addEventListener('submit', async function(e) {
@@ -1732,6 +1943,90 @@
             }
         }
 
+        // Load banner data specifically
+        async function loadBannerData() {
+            if (!firebaseInitialized) {
+                loadBannerFromLocalStorage();
+                return;
+            }
+
+            try {
+                const bannerDoc = await db.collection('admin').doc('banner').get();
+                const bannerData = bannerDoc.data();
+                
+                // Check if document exists by checking if data exists
+                if (bannerData) {
+                    console.log('Banner data loaded from Firestore:', bannerData);
+                    // Always set the values, even if they're empty strings
+                    document.getElementById('bannerTitle').value = bannerData.title || '';
+                    document.getElementById('bannerSubtitle').value = bannerData.subtitle || '';
+                } else {
+                    console.log('Banner document does not exist, loading from localStorage');
+                    loadBannerFromLocalStorage();
+                }
+            } catch (error) {
+                console.error('Error loading banner data:', error);
+                loadBannerFromLocalStorage();
+            }
+        }
+
+
+        // Load personal info data specifically
+        async function loadPersonalInfoData() {
+            if (!firebaseInitialized) {
+                loadPersonalInfoFromLocalStorage();
+                return;
+            }
+
+            try {
+                const personalInfoDoc = await db.collection('admin').doc('personalInfo').get();
+                const personalInfo = personalInfoDoc.data();
+                
+                // Check if document exists by checking if data exists
+                if (personalInfo) {
+                    console.log('Personal info loaded from Firestore:', personalInfo);
+                    
+                    // Always set the values, even if they're empty strings
+                    // This will overwrite any localStorage values
+                    const nameField = document.getElementById('consultantName');
+                    const titleField = document.getElementById('consultantTitle');
+                    
+                    if (nameField) nameField.value = personalInfo.name || '';
+                    if (titleField) titleField.value = personalInfo.title || '';
+                    
+                    // Update localStorage with Firestore data to keep them in sync
+                    localStorage.setItem('personalInfo', JSON.stringify({
+                        name: personalInfo.name || '',
+                        title: personalInfo.title || '',
+                        image: personalInfo.image || ''
+                    }));
+                    
+                    // Handle image URL - only show URL in input field if it's a URL
+                    const urlInput = document.getElementById('profileImageUrl');
+                    if (personalInfo.image) {
+                        // Check if it's a URL (starts with http:// or https://)
+                        if (personalInfo.image.startsWith('http://') || personalInfo.image.startsWith('https://')) {
+                            if (urlInput) urlInput.value = personalInfo.image; // Show URL in the input field
+                        } else {
+                            // It's a base64 data URL, clear the URL input
+                            if (urlInput) urlInput.value = '';
+                        }
+                    } else {
+                        // No image, clear URL input
+                        if (urlInput) urlInput.value = '';
+                    }
+                } else {
+                    console.log('Personal info document does not exist, loading from localStorage');
+                    loadPersonalInfoFromLocalStorage();
+                }
+            } catch (error) {
+                console.error('Error loading personal info:', error);
+                showErrorMessage('Failed to load personal info: ' + error.message);
+                loadPersonalInfoFromLocalStorage();
+            }
+        }
+
+
         // Load admin data from Firestore
         async function loadAdminDataFromFirestore() {
             if (!firebaseInitialized) {
@@ -1740,51 +2035,11 @@
             }
 
             try {
-                const bannerDoc = await db.collection('admin').doc('banner').get();
-                if (bannerDoc.exists()) {
-                    const bannerData = bannerDoc.data();
-                    if (bannerData.title) document.getElementById('bannerTitle').value = bannerData.title;
-                    if (bannerData.subtitle) document.getElementById('bannerSubtitle').value = bannerData.subtitle;
-                } else {
-                    loadBannerFromLocalStorage();
-                }
+                // Load banner data
+                await loadBannerData();
 
-                const personalInfoDoc = await db.collection('admin').doc('personalInfo').get();
-                if (personalInfoDoc.exists()) {
-                    const personalInfo = personalInfoDoc.data();
-                    if (personalInfo.name) document.getElementById('consultantName').value = personalInfo.name;
-                    if (personalInfo.title) document.getElementById('consultantTitle').value = personalInfo.title;
-                    if (personalInfo.image) {
-                        const preview = document.getElementById('profilePreview');
-                        const img = preview.querySelector('img');
-                        img.src = personalInfo.image;
-                        preview.style.display = 'block';
-                    }
-                } else {
-                    loadPersonalInfoFromLocalStorage();
-                }
-
-                const statsDoc = await db.collection('admin').doc('statistics').get();
-                if (statsDoc.exists()) {
-                    const stats = statsDoc.data();
-                    if (stats.customers) document.getElementById('happyCustomers').value = stats.customers;
-                    if (stats.experience) document.getElementById('yearsExperience').value = stats.experience;
-                    if (stats.satisfaction) document.getElementById('satisfaction').value = stats.satisfaction;
-                } else {
-                    loadStatisticsFromLocalStorage();
-                }
-
-                const servicesDoc = await db.collection('admin').doc('services').get();
-                if (servicesDoc.exists()) {
-                    const servicesData = servicesDoc.data();
-                    const services = servicesData.services || [];
-                    services.forEach((service, index) => {
-                        const input = document.getElementById('service' + (index + 1));
-                        if (input) input.value = service;
-                    });
-                } else {
-                    loadServicesFromLocalStorage();
-                }
+                // Load other admin data
+                await loadPersonalInfoData();
             } catch (error) {
                 console.error('Error loading admin data from Firestore:', error);
                 loadDataFromLocalStorage();
@@ -1795,47 +2050,42 @@
         function loadDataFromLocalStorage() {
             loadBannerFromLocalStorage();
             loadPersonalInfoFromLocalStorage();
-            loadStatisticsFromLocalStorage();
-            loadServicesFromLocalStorage();
         }
 
         function loadBannerFromLocalStorage() {
             const bannerData = JSON.parse(localStorage.getItem('bannerData') || '{}');
-            if (bannerData.title) document.getElementById('bannerTitle').value = bannerData.title;
-            if (bannerData.subtitle) document.getElementById('bannerSubtitle').value = bannerData.subtitle;
+            document.getElementById('bannerTitle').value = bannerData.title || '';
+            document.getElementById('bannerSubtitle').value = bannerData.subtitle || '';
         }
 
         function loadPersonalInfoFromLocalStorage() {
             const personalInfo = JSON.parse(localStorage.getItem('personalInfo') || '{}');
-            if (personalInfo.name) document.getElementById('consultantName').value = personalInfo.name;
-            if (personalInfo.title) document.getElementById('consultantTitle').value = personalInfo.title;
+            document.getElementById('consultantName').value = personalInfo.name || '';
+            document.getElementById('consultantTitle').value = personalInfo.title || '';
+            
+            const urlInput = document.getElementById('profileImageUrl');
             if (personalInfo.image) {
-                const preview = document.getElementById('profilePreview');
-                const img = preview.querySelector('img');
-                img.src = personalInfo.image;
-                preview.style.display = 'block';
+                // Check if it's a URL
+                if (personalInfo.image.startsWith('http://') || personalInfo.image.startsWith('https://')) {
+                    if (urlInput) urlInput.value = personalInfo.image;
+                } else {
+                    // It's a base64 data URL, clear the URL input
+                    if (urlInput) urlInput.value = '';
+                }
+            } else {
+                if (urlInput) urlInput.value = '';
             }
         }
 
-        function loadStatisticsFromLocalStorage() {
-            const stats = JSON.parse(localStorage.getItem('statistics') || '{}');
-            if (stats.customers) document.getElementById('happyCustomers').value = stats.customers;
-            if (stats.experience) document.getElementById('yearsExperience').value = stats.experience;
-            if (stats.satisfaction) document.getElementById('satisfaction').value = stats.satisfaction;
-        }
-
-        function loadServicesFromLocalStorage() {
-            const services = JSON.parse(localStorage.getItem('services') || '[]');
-            services.forEach((service, index) => {
-                const input = document.getElementById('service' + (index + 1));
-                if (input) input.value = service;
-            });
-        }
 
         // Load saved data on page load
         window.addEventListener('load', function() {
             loadFirebaseConfig();
-            loadDataFromLocalStorage();
+            // Only load from localStorage if Firebase is not initialized yet
+            // Firebase initialization will load from Firestore and overwrite localStorage data
+            if (!firebaseInitialized) {
+                loadDataFromLocalStorage();
+            }
             updateDashboard();
             
             // Initialize mobile menu state

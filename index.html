@@ -975,6 +975,29 @@
                     <button type="submit" class="btn">💾 Save Banner</button>
                 </form>
             </div>
+
+            <div class="card">
+                <h3>Banner Image Upload</h3>
+                <form id="bannerImageForm">
+                    <div class="form-group">
+                        <label for="bannerImage">Banner Image</label>
+                        <input type="file" id="bannerImage" accept="image/*" onchange="previewBannerImage(this)">
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">Or enter image URL:</p>
+                        <input type="text" id="bannerImageUrl" placeholder="https://example.com/banner.jpg" style="margin-top: 5px;">
+                        <div id="bannerImagePreview" class="image-preview" style="display:none; margin-top: 15px;">
+                            <img src="" alt="Banner Preview" style="max-width: 100%; border-radius: 8px;">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">➕ Add Banner Image</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Banner Images</h3>
+                <div id="bannerImagesList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+                    <p style="color: #666; padding: 20px; text-align: center; grid-column: 1 / -1;">No banner images uploaded yet. Add your first one above!</p>
+                </div>
+            </div>
         </div>
 
         <!-- Personal Info Section -->
@@ -1093,8 +1116,10 @@
             if (sectionId === 'banner') {
                 if (firebaseInitialized) {
                     loadBannerData();
+                    loadBannerImagesList();
                 } else {
                     loadBannerFromLocalStorage();
+                    loadBannerImagesList();
                 }
             } else if (sectionId === 'personal') {
                 if (firebaseInitialized) {
@@ -1433,6 +1458,246 @@
                 showSuccessMessage('Banner saved to local storage only');
             }
         });
+
+        // Preview banner image before upload
+        function previewBannerImage(input) {
+            const preview = document.getElementById('bannerImagePreview');
+            const img = preview.querySelector('img');
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // Check file size (5MB limit)
+                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                if (file.size > maxSize) {
+                    showErrorMessage('Image size must be less than 5MB. Please choose a smaller image.');
+                    input.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                // Check if it's an image
+                if (!file.type.startsWith('image/')) {
+                    showErrorMessage('Please select a valid image file.');
+                    input.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Banner image form submission
+        document.getElementById('bannerImageForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const bannerImageInput = document.getElementById('bannerImage');
+            const bannerImageUrl = document.getElementById('bannerImageUrl').value.trim();
+            
+            // Determine which image source to use
+            let bannerImageSrc = '';
+            
+            if (bannerImageInput.files && bannerImageInput.files[0]) {
+                // New file uploaded - convert to base64
+                const file = bannerImageInput.files[0];
+                
+                // Check file size (5MB limit)
+                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                if (file.size > maxSize) {
+                    showErrorMessage('Image size must be less than 5MB. Please choose a smaller image.');
+                    return;
+                }
+                
+                // Check if it's an image
+                if (!file.type.startsWith('image/')) {
+                    showErrorMessage('Please select a valid image file.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                await new Promise((resolve, reject) => {
+                    reader.onload = function(e) {
+                        bannerImageSrc = e.target.result;
+                        resolve();
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            } else if (bannerImageUrl) {
+                // URL provided - use the URL
+                bannerImageSrc = bannerImageUrl;
+            } else {
+                showErrorMessage('Please select an image file or enter an image URL');
+                return;
+            }
+            
+            try {
+                if (firebaseInitialized) {
+                    // Load existing images array
+                    const bannerImageDoc = await db.collection('admin').doc('bannerImage').get();
+                    let images = [];
+                    
+                    if (bannerImageDoc.exists && bannerImageDoc.data().images) {
+                        images = bannerImageDoc.data().images;
+                    }
+                    
+                    // Add new image to array
+                    images.push(bannerImageSrc);
+                    
+                    // Save updated array
+                    const data = {
+                        images: images,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    await db.collection('admin').doc('bannerImage').set(data, { merge: true });
+                    console.log('Banner Image added to Firestore:', data);
+                    showSuccessMessage('✅ Banner image added successfully!');
+                    
+                    // Reload banner images list
+                    loadBannerImagesList();
+                } else {
+                    showErrorMessage('Firebase not connected. Please connect to Firebase first.');
+                }
+                
+                // Also save to localStorage as backup
+                const localImages = JSON.parse(localStorage.getItem('bannerImages') || '[]');
+                localImages.push(bannerImageSrc);
+                localStorage.setItem('bannerImages', JSON.stringify(localImages));
+                
+                // Reset form
+                document.getElementById('bannerImageForm').reset();
+                document.getElementById('bannerImagePreview').style.display = 'none';
+                updateDashboard();
+            } catch (error) {
+                console.error('Error saving banner image:', error);
+                showErrorMessage('Failed to save banner image: ' + error.message);
+                
+                // Save to localStorage as fallback
+                const localImages = JSON.parse(localStorage.getItem('bannerImages') || '[]');
+                localImages.push(bannerImageSrc);
+                localStorage.setItem('bannerImages', JSON.stringify(localImages));
+                showSuccessMessage('Banner image saved to local storage only');
+                
+                // Reset form
+                document.getElementById('bannerImageForm').reset();
+                document.getElementById('bannerImagePreview').style.display = 'none';
+            }
+        });
+
+        // Remove banner image
+        window.removeBannerImage = async function(imageIndex) {
+            const confirmed = await showCustomConfirm(
+                'Are you sure you want to delete this banner image?<br><br><strong>This action cannot be undone.</strong>',
+                'Delete Banner Image',
+                '🗑️'
+            );
+            
+            if (!confirmed) {
+                return;
+            }
+
+            if (!firebaseInitialized) {
+                showErrorMessage('Firebase not connected');
+                return;
+            }
+
+            try {
+                // Load existing images array
+                const bannerImageDoc = await db.collection('admin').doc('bannerImage').get();
+                let images = [];
+                
+                if (bannerImageDoc.exists && bannerImageDoc.data().images) {
+                    images = bannerImageDoc.data().images;
+                }
+                
+                // Remove image at index
+                images.splice(imageIndex, 1);
+                
+                // Save updated array
+                const data = {
+                    images: images,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await db.collection('admin').doc('bannerImage').set(data, { merge: true });
+                showSuccessMessage('✅ Banner image deleted successfully!');
+                
+                // Reload banner images list
+                loadBannerImagesList();
+            } catch (error) {
+                console.error('Error removing banner image:', error);
+                showErrorMessage('Failed to delete banner image: ' + error.message);
+            }
+        };
+
+        // Load and display banner images list
+        async function loadBannerImagesList() {
+            const list = document.getElementById('bannerImagesList');
+            
+            if (!firebaseInitialized) {
+                // Load from localStorage
+                const localImages = JSON.parse(localStorage.getItem('bannerImages') || '[]');
+                if (localImages.length === 0) {
+                    list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center; grid-column: 1 / -1;">No banner images uploaded yet. Add your first one above!</p>';
+                } else {
+                    list.innerHTML = '';
+                    localImages.forEach((img, index) => {
+                        addBannerImageToList(img, index);
+                    });
+                }
+                return;
+            }
+
+            try {
+                const bannerImageDoc = await db.collection('admin').doc('bannerImage').get();
+                
+                if (!bannerImageDoc.exists || !bannerImageDoc.data().images || bannerImageDoc.data().images.length === 0) {
+                    list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center; grid-column: 1 / -1;">No banner images uploaded yet. Add your first one above!</p>';
+                    return;
+                }
+                
+                const images = bannerImageDoc.data().images;
+                list.innerHTML = '';
+                
+                images.forEach((img, index) => {
+                    addBannerImageToList(img, index);
+                });
+            } catch (error) {
+                console.error('Error loading banner images:', error);
+                list.innerHTML = '<p style="color: #666; padding: 20px; text-align: center; grid-column: 1 / -1;">Error loading banner images</p>';
+            }
+        }
+
+        // Add banner image to list display
+        function addBannerImageToList(imgSrc, index) {
+            const list = document.getElementById('bannerImagesList');
+            const div = document.createElement('div');
+            div.style.position = 'relative';
+            div.style.border = '2px solid #e0e0e0';
+            div.style.borderRadius = '8px';
+            div.style.overflow = 'hidden';
+            div.style.background = '#f8f9fa';
+            
+            // Escape the image source for onclick
+            const escapedImg = imgSrc.replace(/'/g, "\\'");
+            div.innerHTML = `
+                <img src="${imgSrc}" alt="Banner Image" style="width: 100%; height: 200px; object-fit: cover; cursor: pointer;" onclick="viewFullImage('${escapedImg}')">
+                <div style="padding: 10px; display: flex; gap: 10px;">
+                    <button class="btn btn-remove" onclick="event.stopPropagation(); removeBannerImage(${index})" style="flex: 1; font-size: 13px; padding: 8px 15px;">🗑️ Remove</button>
+                </div>
+            `;
+            list.appendChild(div);
+        }
 
         // Personal info form submission
         document.getElementById('personalInfoForm').addEventListener('submit', async function(e) {
@@ -2242,6 +2507,7 @@
             }
 
             try {
+                // Load banner text data (title and subtitle)
                 const bannerDoc = await db.collection('admin').doc('banner').get();
                 const bannerData = bannerDoc.data();
                 

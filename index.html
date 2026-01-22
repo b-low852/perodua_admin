@@ -972,6 +972,15 @@
                         <label for="bannerSubtitle">Banner Subtitle</label>
                         <textarea id="bannerSubtitle" placeholder="Enter banner description"></textarea>
                     </div>
+                    <div class="form-group">
+                        <label for="bannerBackgroundImage">Background Image</label>
+                        <input type="file" id="bannerBackgroundImage" accept="image/*" onchange="previewBannerBackgroundImage(this)">
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">Or enter image URL:</p>
+                        <input type="text" id="bannerBackgroundImageUrl" placeholder="https://example.com/background.jpg" style="margin-top: 5px;" onchange="previewBannerBackgroundImageUrl(this)">
+                        <div id="bannerBackgroundImagePreview" class="image-preview" style="display:none; margin-top: 15px;">
+                            <img src="" alt="Background Preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: cover;">
+                        </div>
+                    </div>
                     <button type="submit" class="btn">💾 Save Banner</button>
                 </form>
             </div>
@@ -1425,15 +1434,60 @@
             e.preventDefault();
             const title = document.getElementById('bannerTitle').value.trim();
             const subtitle = document.getElementById('bannerSubtitle').value.trim();
+            const backgroundImageInput = document.getElementById('bannerBackgroundImage');
+            const backgroundImageUrl = document.getElementById('bannerBackgroundImageUrl').value.trim();
             
             if (!title && !subtitle) {
                 showErrorMessage('Please enter at least a title or subtitle');
                 return;
             }
             
+            // Handle background image
+            let backgroundImageSrc = '';
+            
+            // Check if there's an existing background image stored (don't overwrite if no new image provided)
+            const existingBannerData = JSON.parse(localStorage.getItem('bannerData') || '{}');
+            const existingBackgroundImage = existingBannerData.backgroundImage || '';
+            
+            if (backgroundImageInput.files && backgroundImageInput.files[0]) {
+                // New file uploaded - convert to base64
+                const file = backgroundImageInput.files[0];
+                
+                // Check file size (5MB limit)
+                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                if (file.size > maxSize) {
+                    showErrorMessage('Image size must be less than 5MB. Please choose a smaller image.');
+                    return;
+                }
+                
+                // Check if it's an image
+                if (!file.type.startsWith('image/')) {
+                    showErrorMessage('Please select a valid image file.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                await new Promise((resolve, reject) => {
+                    reader.onload = function(e) {
+                        backgroundImageSrc = e.target.result;
+                        resolve();
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            } else if (backgroundImageUrl) {
+                // URL provided - use the URL
+                backgroundImageSrc = backgroundImageUrl;
+            } else {
+                // No new image provided, keep existing one if available
+                backgroundImageSrc = existingBackgroundImage;
+            }
+            
             const data = {
                 title: title,
                 subtitle: subtitle,
+                backgroundImage: backgroundImageSrc,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
@@ -1447,14 +1501,14 @@
                 }
                 
                 // Also save to localStorage as backup
-                localStorage.setItem('bannerData', JSON.stringify({ title: title, subtitle: subtitle }));
+                localStorage.setItem('bannerData', JSON.stringify({ title: title, subtitle: subtitle, backgroundImage: backgroundImageSrc }));
                 updateDashboard();
             } catch (error) {
                 console.error('Error saving banner:', error);
                 showErrorMessage('Failed to save banner: ' + error.message);
                 
                 // Save to localStorage as fallback
-                localStorage.setItem('bannerData', JSON.stringify({ title: title, subtitle: subtitle }));
+                localStorage.setItem('bannerData', JSON.stringify({ title: title, subtitle: subtitle, backgroundImage: backgroundImageSrc }));
                 showSuccessMessage('Banner saved to local storage only');
             }
         });
@@ -1492,6 +1546,62 @@
                 }
                 
                 reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Preview banner background image before upload
+        function previewBannerBackgroundImage(input) {
+            const preview = document.getElementById('bannerBackgroundImagePreview');
+            const img = preview.querySelector('img');
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // Check file size (5MB limit)
+                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                if (file.size > maxSize) {
+                    showErrorMessage('Image size must be less than 5MB. Please choose a smaller image.');
+                    input.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                // Check if it's an image
+                if (!file.type.startsWith('image/')) {
+                    showErrorMessage('Please select a valid image file.');
+                    input.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Preview banner background image from URL
+        function previewBannerBackgroundImageUrl(input) {
+            const preview = document.getElementById('bannerBackgroundImagePreview');
+            const img = preview.querySelector('img');
+            const url = input.value.trim();
+            
+            if (url) {
+                // Validate URL
+                if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/')) {
+                    img.src = url;
+                    preview.style.display = 'block';
+                } else {
+                    showErrorMessage('Please enter a valid image URL (must start with http:// or https://)');
+                    preview.style.display = 'none';
+                }
+            } else {
+                preview.style.display = 'none';
             }
         }
 
@@ -2517,6 +2627,35 @@
                     // Always set the values, even if they're empty strings
                     document.getElementById('bannerTitle').value = bannerData.title || '';
                     document.getElementById('bannerSubtitle').value = bannerData.subtitle || '';
+                    
+                    // Load background image
+                    if (bannerData.backgroundImage) {
+                        const urlInput = document.getElementById('bannerBackgroundImageUrl');
+                        const preview = document.getElementById('bannerBackgroundImagePreview');
+                        const img = preview.querySelector('img');
+                        
+                        // Check if it's a URL (starts with http:// or https://)
+                        if (bannerData.backgroundImage.startsWith('http://') || bannerData.backgroundImage.startsWith('https://')) {
+                            if (urlInput) urlInput.value = bannerData.backgroundImage;
+                            if (img) {
+                                img.src = bannerData.backgroundImage;
+                                preview.style.display = 'block';
+                            }
+                        } else {
+                            // It's a base64 data URL, clear the URL input but show preview
+                            if (urlInput) urlInput.value = '';
+                            if (img) {
+                                img.src = bannerData.backgroundImage;
+                                preview.style.display = 'block';
+                            }
+                        }
+                    } else {
+                        // No background image, clear preview
+                        const preview = document.getElementById('bannerBackgroundImagePreview');
+                        if (preview) preview.style.display = 'none';
+                        const urlInput = document.getElementById('bannerBackgroundImageUrl');
+                        if (urlInput) urlInput.value = '';
+                    }
                 } else {
                     console.log('Banner document does not exist, loading from localStorage');
                     loadBannerFromLocalStorage();
@@ -2613,6 +2752,35 @@
             const bannerData = JSON.parse(localStorage.getItem('bannerData') || '{}');
             document.getElementById('bannerTitle').value = bannerData.title || '';
             document.getElementById('bannerSubtitle').value = bannerData.subtitle || '';
+            
+            // Load background image
+            if (bannerData.backgroundImage) {
+                const urlInput = document.getElementById('bannerBackgroundImageUrl');
+                const preview = document.getElementById('bannerBackgroundImagePreview');
+                const img = preview.querySelector('img');
+                
+                // Check if it's a URL (starts with http:// or https://)
+                if (bannerData.backgroundImage.startsWith('http://') || bannerData.backgroundImage.startsWith('https://')) {
+                    if (urlInput) urlInput.value = bannerData.backgroundImage;
+                    if (img) {
+                        img.src = bannerData.backgroundImage;
+                        preview.style.display = 'block';
+                    }
+                } else {
+                    // It's a base64 data URL, clear the URL input but show preview
+                    if (urlInput) urlInput.value = '';
+                    if (img) {
+                        img.src = bannerData.backgroundImage;
+                        preview.style.display = 'block';
+                    }
+                }
+            } else {
+                // No background image, clear preview
+                const preview = document.getElementById('bannerBackgroundImagePreview');
+                if (preview) preview.style.display = 'none';
+                const urlInput = document.getElementById('bannerBackgroundImageUrl');
+                if (urlInput) urlInput.value = '';
+            }
         }
 
         function loadPersonalInfoFromLocalStorage() {

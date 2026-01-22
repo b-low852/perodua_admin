@@ -974,12 +974,16 @@
                     </div>
                     <div class="form-group">
                         <label for="bannerBackgroundImage">Background Image</label>
+                        <div id="bannerBackgroundImagePreview" class="image-preview" style="display:none; margin-top: 15px; position: relative; border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px; background: #f8f9fa;">
+                            <p style="color: #666; font-size: 12px; margin-bottom: 10px;"><strong>Current Background Image:</strong></p>
+                            <img src="" alt="Background Preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: cover; display: block; margin: 0 auto;">
+                            <button type="button" onclick="removeBannerBackgroundImage()" style="margin-top: 10px; padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%;">🗑️ Remove Background Image</button>
+                        </div>
+                        <p style="color: #666; font-size: 12px; margin-top: 10px; margin-bottom: 5px;"><strong>Upload new image or enter URL to change:</strong></p>
                         <input type="file" id="bannerBackgroundImage" accept="image/*" onchange="previewBannerBackgroundImage(this)">
                         <p style="color: #666; font-size: 12px; margin-top: 5px;">Or enter image URL:</p>
-                        <input type="text" id="bannerBackgroundImageUrl" placeholder="https://example.com/background.jpg" style="margin-top: 5px;" onchange="previewBannerBackgroundImageUrl(this)">
-                        <div id="bannerBackgroundImagePreview" class="image-preview" style="display:none; margin-top: 15px;">
-                            <img src="" alt="Background Preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: cover;">
-                        </div>
+                        <input type="text" id="bannerBackgroundImageUrl" placeholder="https://example.com/background.jpg" style="margin-top: 5px;">
+                        <button type="button" onclick="previewBannerBackgroundImageUrl(document.getElementById('bannerBackgroundImageUrl'))" style="margin-top: 5px; padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Preview URL</button>
                     </div>
                     <button type="submit" class="btn">💾 Save Banner</button>
                 </form>
@@ -1444,8 +1448,10 @@
             
             // Handle background image
             let backgroundImageSrc = '';
+            const preview = document.getElementById('bannerBackgroundImagePreview');
+            const isPreviewVisible = preview && preview.style.display !== 'none';
             
-            // Check if there's an existing background image stored (don't overwrite if no new image provided)
+            // Check if there's an existing background image stored
             const existingBannerData = JSON.parse(localStorage.getItem('bannerData') || '{}');
             const existingBackgroundImage = existingBannerData.backgroundImage || '';
             
@@ -1479,8 +1485,11 @@
             } else if (backgroundImageUrl) {
                 // URL provided - use the URL
                 backgroundImageSrc = backgroundImageUrl;
+            } else if (!isPreviewVisible && existingBackgroundImage) {
+                // Preview is hidden and there was an existing image - user removed it
+                backgroundImageSrc = '';
             } else {
-                // No new image provided, keep existing one if available
+                // No new image provided and preview is visible - keep existing one
                 backgroundImageSrc = existingBackgroundImage;
             }
             
@@ -1502,6 +1511,30 @@
                 
                 // Also save to localStorage as backup
                 localStorage.setItem('bannerData', JSON.stringify({ title: title, subtitle: subtitle, backgroundImage: backgroundImageSrc }));
+                
+                // Reset file input but keep preview if image was saved
+                if (backgroundImageInput.files && backgroundImageInput.files[0]) {
+                    backgroundImageInput.value = '';
+                }
+                if (backgroundImageSrc && backgroundImageUrl) {
+                    // If URL was used and image was saved, clear URL input but keep preview
+                    document.getElementById('bannerBackgroundImageUrl').value = '';
+                }
+                
+                // Update preview if image was saved
+                if (backgroundImageSrc) {
+                    const preview = document.getElementById('bannerBackgroundImagePreview');
+                    const img = preview.querySelector('img');
+                    if (preview && img) {
+                        img.src = backgroundImageSrc;
+                        preview.style.display = 'block';
+                    }
+                } else {
+                    // Image was removed, hide preview
+                    const preview = document.getElementById('bannerBackgroundImagePreview');
+                    if (preview) preview.style.display = 'none';
+                }
+                
                 updateDashboard();
             } catch (error) {
                 console.error('Error saving banner:', error);
@@ -1589,7 +1622,7 @@
         function previewBannerBackgroundImageUrl(input) {
             const preview = document.getElementById('bannerBackgroundImagePreview');
             const img = preview.querySelector('img');
-            const url = input.value.trim();
+            const url = input ? input.value.trim() : '';
             
             if (url) {
                 // Validate URL
@@ -1603,6 +1636,27 @@
             } else {
                 preview.style.display = 'none';
             }
+        }
+
+        // Remove banner background image
+        window.removeBannerBackgroundImage = function() {
+            const preview = document.getElementById('bannerBackgroundImagePreview');
+            const fileInput = document.getElementById('bannerBackgroundImage');
+            const urlInput = document.getElementById('bannerBackgroundImageUrl');
+            
+            // Clear inputs
+            if (fileInput) fileInput.value = '';
+            if (urlInput) urlInput.value = '';
+            
+            // Hide preview
+            if (preview) preview.style.display = 'none';
+            
+            // Clear from localStorage
+            const bannerData = JSON.parse(localStorage.getItem('bannerData') || '{}');
+            delete bannerData.backgroundImage;
+            localStorage.setItem('bannerData', JSON.stringify(bannerData));
+            
+            showSuccessMessage('Background image removed. Click "Save Banner" to apply changes.');
         }
 
         // Banner image form submission

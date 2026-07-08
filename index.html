@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perodua Admin Dashboard</title>
+    <link rel="icon" type="image/png" href="lo.png">
+    <link rel="apple-touch-icon" href="lo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -805,8 +807,9 @@
             display: none;
             position: fixed;
             top: 16px;
-            left: 16px;
-            z-index: 1001;
+            right: 16px;
+            left: auto;
+            z-index: 1003;
             background: var(--sidebar-bg);
             color: white;
             border: none;
@@ -815,6 +818,12 @@
             cursor: pointer;
             font-size: 20px;
             box-shadow: var(--shadow-md);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-close-mobile {
+            display: none;
         }
 
         .sidebar.mobile-hidden {
@@ -869,7 +878,30 @@
             }
 
             .mobile-menu-toggle {
-                display: block;
+                display: flex;
+            }
+
+            .sidebar-close-mobile {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: absolute;
+                top: 22px;
+                right: 14px;
+                width: 34px;
+                height: 34px;
+                background: rgba(255,255,255,0.08);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 22px;
+                line-height: 1;
+            }
+
+            .sidebar-header {
+                position: relative;
+                padding-right: 52px;
             }
 
             .sidebar {
@@ -1223,8 +1255,9 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
+            <button type="button" class="sidebar-close-mobile" onclick="toggleMobileMenu()" aria-label="Close menu">&times;</button>
             <div class="sidebar-logo-icon">
-                <img src="pero.png" alt="Perodua">
+                <img src="lo.png" alt="Perodua">
             </div>
             <div>
                 <h1>Perodua</h1>

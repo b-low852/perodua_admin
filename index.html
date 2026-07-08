@@ -1109,7 +1109,7 @@
         /* ── Stats row ── */
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 18px;
             margin-bottom: 22px;
         }
@@ -1156,6 +1156,30 @@
         .stat-blue  { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
         .stat-rose  { background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%); }
         .stat-teal  { background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%); }
+        .stat-violet { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+        .stat-amber { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+        .click-breakdown-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .click-breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            background: #f8f9fb;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+        }
+
+        .click-breakdown-item strong {
+            color: var(--text-primary);
+            font-size: 16px;
+        }
 
         /* ── Welcome card ── */
         .welcome-card-header {
@@ -1217,6 +1241,10 @@
         }
 
         @media (max-width: 1100px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
             .quick-actions-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -1346,6 +1374,15 @@
                         <div class="value" id="totalCars">0</div>
                     </div>
                 </div>
+                <div class="stat-card stat-violet">
+                    <div class="stat-card-icon">
+                        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    </div>
+                    <div class="stat-card-body">
+                        <h4>Link Clicks</h4>
+                        <div class="value" id="linkClickCount">0</div>
+                    </div>
+                </div>
                 <div class="stat-card stat-teal">
                     <div class="stat-card-icon">
                         <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -1355,6 +1392,21 @@
                         <div class="value stat-value-sm" id="lastUpdated">—</div>
                     </div>
                 </div>
+                <div class="stat-card stat-amber">
+                    <div class="stat-card-icon">
+                        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    </div>
+                    <div class="stat-card-body">
+                        <h4>Page Views</h4>
+                        <div class="value" id="pageViewCount">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" id="linkClicksBreakdownCard">
+                <h3>Link Click Breakdown</h3>
+                <p id="linkClicksEmpty" style="display: none; color: var(--text-secondary); font-size: 14px;">No link clicks recorded yet.</p>
+                <div id="linkClicksBreakdown" class="click-breakdown-list"></div>
             </div>
 
             <div class="card welcome-card">
@@ -1677,7 +1729,6 @@
                 firebaseInitialized = true;
                 
                 updateFirebaseStatus(true);
-                showSuccessMessage('Firebase connected successfully!');
                 
                 // Load all data from Firestore (this will overwrite any localStorage data)
                 loadCarModelsFromFirestore();
@@ -1697,6 +1748,7 @@
                         }
                     }
                 });
+                subscribeToLinkClickStats();
                 updateDashboard();
                 
                 return true;
@@ -1730,11 +1782,160 @@
                 } catch (error) {
                     console.error('Error updating dashboard:', error);
                 }
+
+                await loadLinkClickStats();
+            } else {
+                loadLinkClickStatsFromLocalStorage();
             }
             
             const now = new Date();
             document.getElementById('lastUpdated').textContent = now.toLocaleTimeString();
         }
+
+        function formatLinkLabel(key) {
+            const labels = {
+                whatsapp: 'WhatsApp',
+                facebook: 'Facebook',
+                tiktok: 'TikTok',
+                instagram: 'Instagram',
+                phone: 'Phone',
+                email: 'Email',
+                website: 'Website',
+                internal: 'Internal Links',
+                general: 'Other Links'
+            };
+            return labels[key] || key.charAt(0).toUpperCase() + key.slice(1);
+        }
+
+        function normalizeCount(value) {
+            if (typeof value === 'number') return value;
+            if (value && typeof value.toNumber === 'function') return value.toNumber();
+            const parsed = parseInt(value, 10);
+            return Number.isNaN(parsed) ? 0 : parsed;
+        }
+
+        function getClickBreakdown(analytics) {
+            const breakdown = {};
+
+            if (analytics.clicks && typeof analytics.clicks === 'object' && !Array.isArray(analytics.clicks)) {
+                Object.entries(analytics.clicks).forEach(([key, value]) => {
+                    const count = normalizeCount(value);
+                    if (count > 0) breakdown[key] = count;
+                });
+            }
+
+            Object.entries(analytics).forEach(([key, value]) => {
+                if (key.startsWith('clicks.')) {
+                    const type = key.slice(7);
+                    const count = normalizeCount(value);
+                    if (count > 0) breakdown[type] = (breakdown[type] || 0) + count;
+                }
+            });
+
+            return Object.entries(breakdown);
+        }
+
+        function updateLinkClicksDisplay(data) {
+            const analytics = data || {};
+            const total = normalizeCount(analytics.linkClicks);
+            const pageViews = normalizeCount(analytics.pageViews);
+
+            document.getElementById('linkClickCount').textContent = total;
+            document.getElementById('pageViewCount').textContent = pageViews;
+
+            const breakdownEl = document.getElementById('linkClicksBreakdown');
+            const emptyEl = document.getElementById('linkClicksEmpty');
+            const entries = getClickBreakdown(analytics);
+
+            if (!entries.length) {
+                breakdownEl.innerHTML = '';
+                if (emptyEl) {
+                    emptyEl.style.display = total > 0 ? 'none' : 'block';
+                }
+                return;
+            }
+
+            if (emptyEl) {
+                emptyEl.style.display = 'none';
+            }
+
+            breakdownEl.innerHTML = entries
+                .sort((a, b) => b[1] - a[1])
+                .map(([key, value]) => `
+                    <div class="click-breakdown-item">
+                        <span>${formatLinkLabel(key)}</span>
+                        <strong>${value}</strong>
+                    </div>
+                `).join('');
+        }
+
+        function loadLinkClickStatsFromLocalStorage() {
+            const analytics = JSON.parse(localStorage.getItem('linkClickAnalytics') || '{"linkClicks":0,"clicks":{}}');
+            updateLinkClicksDisplay(analytics);
+        }
+
+        async function loadLinkClickStats() {
+            if (!firebaseInitialized) {
+                loadLinkClickStatsFromLocalStorage();
+                return;
+            }
+
+            try {
+                const doc = await db.collection('admin').doc('analytics').get();
+                updateLinkClicksDisplay(doc.exists ? doc.data() : { linkClicks: 0, clicks: {} });
+            } catch (error) {
+                console.error('Error loading link click stats:', error);
+                loadLinkClickStatsFromLocalStorage();
+            }
+        }
+
+        let linkClickStatsUnsubscribe = null;
+
+        function subscribeToLinkClickStats() {
+            if (!firebaseInitialized) {
+                return;
+            }
+
+            if (linkClickStatsUnsubscribe) {
+                linkClickStatsUnsubscribe();
+            }
+
+            linkClickStatsUnsubscribe = db.collection('admin').doc('analytics').onSnapshot(
+                (doc) => {
+                    updateLinkClicksDisplay(doc.exists ? doc.data() : { linkClicks: 0, clicks: {} });
+                },
+                (error) => {
+                    console.error('Error subscribing to link click stats:', error);
+                }
+            );
+        }
+
+        // Track link clicks from the public website or admin previews
+        async function trackLinkClick(linkType = 'general') {
+            const safeLinkType = (linkType || 'general').toString().trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'general';
+
+            if (!firebaseInitialized) {
+                const analytics = JSON.parse(localStorage.getItem('linkClickAnalytics') || '{"linkClicks":0,"clicks":{}}');
+                analytics.linkClicks = (analytics.linkClicks || 0) + 1;
+                analytics.clicks = analytics.clicks || {};
+                analytics.clicks[safeLinkType] = (analytics.clicks[safeLinkType] || 0) + 1;
+                localStorage.setItem('linkClickAnalytics', JSON.stringify(analytics));
+                updateLinkClicksDisplay(analytics);
+                return;
+            }
+
+            try {
+                await db.collection('admin').doc('analytics').set({
+                    linkClicks: firebase.firestore.FieldValue.increment(1),
+                    [`clicks.${safeLinkType}`]: firebase.firestore.FieldValue.increment(1),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+            } catch (error) {
+                console.error('Error tracking link click:', error);
+            }
+        }
+
+        window.trackLinkClick = trackLinkClick;
 
         // Load Firebase config from localStorage or use default
         function loadFirebaseConfig() {
